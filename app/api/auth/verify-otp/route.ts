@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
@@ -28,13 +30,37 @@ export async function POST(request: Request) {
     const { code, expiresAt } = user.otp;
 
     if (new Date() > expiresAt) {
+      await prisma.oTP.delete({ where: { userId: user.id } });
       return NextResponse.json({ message: 'OTP has expired' }, { status: 400 });
     }
 
     if (otp === code) {
       await prisma.oTP.delete({ where: { userId: user.id } });
 
-      return NextResponse.json({ message: 'OTP verified successfully!' }, { status: 200 });
+      const accessToken = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_SECRET as string,
+        { expiresIn: '15m' } 
+      );
+      const refreshToken = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.REFRESH_SECRET as string,
+        { expiresIn: '7d' } 
+      );
+
+      cookies().set('refreshToken', refreshToken, {
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60,
+      });
+
+      return NextResponse.json({
+        message: 'OTP verified successfully!',
+        user: { id: user.id, email: user.email },
+        accessToken,
+      }, { status: 200 });
+
     } else {
       return NextResponse.json({ message: 'Invalid OTP' }, { status: 400 });
     }
