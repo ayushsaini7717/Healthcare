@@ -13,14 +13,13 @@ export const Navbar = ({ setShowBooking }: { setShowBooking: any }) => {
     if (token) {
       setIsLoggedIn(true);
     }
-  }, []);
+  }, [isLoggedIn]);
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
       localStorage.removeItem("accessToken");
       setIsLoggedIn(false);
-      window.location.reload(); // refresh state
+      window.location.reload();
     } catch (error) {
       console.error("Error logging out:", error);
     }
