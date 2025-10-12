@@ -10,11 +10,12 @@ import { HealthcareChatbot } from "@/components/healthcare-chatbot"
 import { services } from "./constants"
 import { doctors } from "./constants"
 import { Navbar } from "@/components/Navbar"
+import { useRouter } from "next/navigation"
 
 export default function HomePage() {
   const [showBooking, setShowBooking] = useState(false)
   const [showChatbot, setShowChatbot] = useState(false)
-
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,7 +33,7 @@ export default function HomePage() {
               personalized care, and access our AI assistant in Kumaoni language.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => setShowBooking(true)} className="rounded-full text-lg px-8 py-6">
+              <Button size="lg" onClick={() => router.push("/appointment")} className="rounded-full text-lg px-8 py-6">
                 <Calendar className="mr-2 h-5 w-5" />
                 Book Appointment
               </Button>
