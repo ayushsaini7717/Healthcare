@@ -18,11 +18,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <Navbar setShowBooking={setShowBooking} />
       
 
-      {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
@@ -50,7 +48,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Services Section */}
       <section id="services" className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto">
           <div className="text-center mb-12">
@@ -89,7 +86,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Doctors Section */}
       <section id="doctors" className="py-16 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-12">
@@ -135,7 +131,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Contact Section */}
       <section id="contact" className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto">
           <div className="text-center mb-12">
@@ -179,7 +174,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-card border-t border-border py-8 px-4">
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -192,7 +186,6 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Modals */}
       {showBooking && <AppointmentBooking onClose={() => setShowBooking(false)} />}
 
       {showChatbot && <HealthcareChatbot onClose={() => setShowChatbot(false)} />}
