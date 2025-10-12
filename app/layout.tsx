@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import SessionProviders from '@/providers/SessionProvider'
 
 export const metadata: Metadata = {
   title: 'Healthcare AI',
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        {children}
+        <SessionProviders>
+          {children}
+        </SessionProviders>
         <Analytics />
       </body>
     </html>

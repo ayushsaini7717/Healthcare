@@ -1,6 +1,21 @@
 import React from 'react'
+import { useSession, signIn, signOut } from "next-auth/react"
 import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+export default function AuthButton() {
+  const { data: session } = useSession()
+
+  if (session) {
+    return (
+      <>
+        <p>Signed in as {session.user?.email}</p>
+        <button onClick={() => signOut()}>Sign out</button>
+      </>
+    )
+  }
+  return <button onClick={() => signIn()}>Sign in</button>
+}
 
 export const Navbar = ({ setShowBooking }: {setShowBooking : any}) => {
   return (
@@ -24,6 +39,7 @@ export const Navbar = ({ setShowBooking }: {setShowBooking : any}) => {
               <Button onClick={() => setShowBooking(true)} className="rounded-full">
                 Book Appointment
               </Button>
+              <AuthButton/>
             </nav>
           </div>
         </div>
