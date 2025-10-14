@@ -93,7 +93,7 @@ export default function VerifyOTPPage() {
     <div className="flex h-[100vh] justify-center items-center gap-2">
         <input placeholder="Enter password" className="border-2 rounded-md p-2" type="password" onChange={(e)=>setPassword(e.target.value)}></input>
         <button className="bg-green-600 text-white py-2 rounded px-2" onClick={async ()=>{
-            const res=await fetch("http://localhost:3000/api/auth/verify-otp",{
+            const res=await fetch(`${process.env.NEXT_PUBLIC_BASEURL}/api/auth/verify-otp`,{
                 method: "POST",
                 body: JSON.stringify({
                     email,
