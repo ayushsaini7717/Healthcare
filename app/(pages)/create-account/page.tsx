@@ -41,7 +41,7 @@ export default function VerifyOTPPage() {
       />
       <button type="button" className="min-w-5 text-nowrap bg-black text-white rounded-md text-sm px-2 cursor-pointer" onClick={async ()=>{
         setLoading(true);
-        const res=await fetch(`http://localhost:3000/api/auth/otp`,{
+        const res=await fetch(`${process.env.NEXT_PUBLIC_BASEURL}/api/auth/otp`,{
             method: "POST",
             body: JSON.stringify({
                 email
