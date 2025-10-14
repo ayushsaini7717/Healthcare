@@ -9,7 +9,7 @@ export default function AuthButton() {
   if (session) {
     return (
       <>
-        <p>Signed in as {session.user?.email}</p>
+        <p className='rounded-full text-white bg-black w-10 h-10 flex justify-center items-center'>{session.user?.email?.slice(0,1).toUpperCase()}</p>
         <button onClick={() => signOut()}>Sign out</button>
       </>
     )
