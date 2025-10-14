@@ -56,11 +56,18 @@ export default function LoginPage() {
       </form>
       <div className="flex flex-col gap-2 justify-center items-center mt-10">
         <div>Or Login with</div>
-        <span>
-          <img className="rounded-full cursor-pointer border border-black" onClick={()=>{
-            signIn("github",{callbackUrl: "/"});
-          }} src="/githubicon.png" height={70} width={70}></img>
-        </span>
+        <div className="flex gap-2">
+          <span>
+            <img className="rounded-full cursor-pointer border border-black" onClick={()=>{
+              signIn("github",{callbackUrl: "/"});
+            }} src="/githubicon.png" height={70} width={70}></img>
+          </span>
+          <span>
+            <img className="rounded-full cursor-pointer border border-black" onClick={()=>{
+              signIn("google",{callbackUrl: "/"});
+            }} src="/google-icon.png" height={70} width={70}></img>
+          </span>
+        </div>
       </div>
     </>
   );

@@ -1,10 +1,15 @@
-import GithubProvider from "next-auth/providers/github"
+import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import prisma from "./prisma";
 import bcrypt from "bcrypt";
 
 export const authOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!
+    }),
     GithubProvider({
       clientId: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
@@ -88,7 +93,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
-        token.role = user.role; // <-- CRUCIAL: Add role to JWT token
+        token.role = user.role;
       } else if (token.email && !token.role) {
         const dbUser = await prisma.user.findUnique({
             where: { email: token.email },
@@ -105,7 +110,7 @@ export const authOptions = {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
-        session.user.role = token.role as 'PATIENT' | 'HOSPITAL_ADMIN' | 'SUPER_ADMIN'; // <-- CRUCIAL: Expose role
+        session.user.role = token.role as 'PATIENT' | 'HOSPITAL_ADMIN' | 'SUPER_ADMIN'; 
       }
       return session;
     },
