@@ -3,7 +3,7 @@ import { Heart, Shield, Users, Phone } from "lucide-react"
 export const services = [
   {
     title: "General Consultation",
-    description: "Comprehensive health checkups and consultations",
+    description: "Health checkups and consultations",
     price: "₹500",
     duration: "30 min",
     icon: Heart,
