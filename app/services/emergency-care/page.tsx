@@ -1,6 +1,11 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { AppointmentBooking } from "@/components/appointment-booking";
 
 export default function EmergencyCarePage() {
+  const [showBooking, setShowBooking] = useState(false);
+
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
       <h1 className="text-3xl font-bold mb-4">Emergency Care</h1>
@@ -19,12 +24,18 @@ export default function EmergencyCarePage() {
 
       <p className="text-lg font-semibold mb-4">Fee: ₹1200 | Available 24/7</p>
 
-      <Link
-        href="/book-appointment"
+      {/* Button now opens booking modal instead of navigating */}
+      <button
+        onClick={() => setShowBooking(true)}
         className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
       >
         Book Emergency Support
-      </Link>
+      </button>
+
+      {/* Show booking modal */}
+      {showBooking && (
+        <AppointmentBooking onClose={() => setShowBooking(false)} />
+      )}
     </div>
   );
 }
