@@ -30,6 +30,7 @@ export async function POST(request: Request) {
                 city: city,
                 phone: phone, 
                 status: HospitalStatus.PENDING_REVIEW,
+                applicantEmail: email,
             }
         });
 
