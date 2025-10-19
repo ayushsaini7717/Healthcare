@@ -29,7 +29,7 @@ export function AppointmentBooking({ onClose }: AppointmentBookingProps) {
     doctor: "",
     date: "",
     time: "",
-    notes: "",
+    notes: ""
   })
   const [paymentComplete, setPaymentComplete] = useState(false)
 
@@ -58,7 +58,7 @@ export function AppointmentBooking({ onClose }: AppointmentBookingProps) {
     "15:00",
     "15:30",
     "16:00",
-    "16:30",
+    "16:30"
   ]
 
   const handleSubmit = (e: React.FormEvent) => {
