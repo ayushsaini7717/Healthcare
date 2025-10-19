@@ -39,6 +39,9 @@ export const Navbar = ({ setShowBooking }: {setShowBooking : any}) => {
               <Button onClick={() => setShowBooking(true)} className="rounded-full">
                 Book Appointment
               </Button>
+              <Button onClick={() => window.location.href='/create-account'} className="rounded-full cursor-pointer bg-blue-500 hover:bg-blue-600">
+                Create Account
+              </Button>
               <AuthButton/>
             </nav>
           </div>

@@ -1,10 +1,15 @@
-import GithubProvider from "next-auth/providers/github"
+import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import prisma from "./prisma";
 import bcrypt from "bcrypt";
 
 export const authOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!
+    }),
     GithubProvider({
       clientId: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
@@ -59,17 +64,53 @@ export const authOptions = {
     signIn: "/login", // optional
   },
    callbacks: {
-    async jwt({ token, user }: any) {
+    async signIn({ user, account, profile }: any) {
+      if (account.provider === "github") {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+        });
+
+        if (!existingUser) {
+          await prisma.user.create({
+            data: {
+              email: user.email!,
+              name: user.name || profile?.login || "GitHub User",
+              password: "", 
+              role: "PATIENT", 
+              isEmailVerified: true, 
+            },
+          });
+        }
+        if (existingUser) {
+          user.id = existingUser.id;
+          user.role = existingUser.role; 
+          user.email = existingUser.email;
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user }:any) {
       if (user) {
         token.id = user.id;
-        token.username = user.username;
+        token.email = user.email;
+        token.role = user.role;
+      } else if (token.email && !token.role) {
+        const dbUser = await prisma.user.findUnique({
+            where: { email: token.email },
+            select: { role: true },
+        });
+        if (dbUser) {
+            token.role = dbUser.role;
+        }
       }
       return token;
     },
+    
     async session({ session, token }:any) {
       if (token && session.user) {
-        session.user.id = token.id;
-        session.user.username = token.username;
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
+        session.user.role = token.role as 'PATIENT' | 'HOSPITAL_ADMIN' | 'SUPER_ADMIN'; 
       }
       return session;
     },
