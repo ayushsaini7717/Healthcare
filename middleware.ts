@@ -38,5 +38,6 @@ export const config = {
     "/admin/:path*", 
     "/api/hospital-admin/:path*", 
     "/api/admin/:path*", 
+    "/super-admin/:path*"
   ],
 };

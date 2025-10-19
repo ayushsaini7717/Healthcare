@@ -42,6 +42,12 @@ export const Navbar = ({ setShowBooking }: {setShowBooking : any}) => {
               <Button onClick={() => window.location.href='/create-account'} className="rounded-full cursor-pointer bg-blue-500 hover:bg-blue-600">
                 Create Account
               </Button>
+              <Button onClick={()=> window.location.href='/super-admin/dashboard'} className="rounded-full cursor-pointer bg-red-500 hover:bg-red-600">
+                Super Admin?
+              </Button>
+              <Button onClick={()=> window.location.href='/hospital-register'} className="rounded-full cursor-pointer bg-yellow-500 hover:bg-yellow-600">
+                Hospital Register?
+              </Button>
               <AuthButton/>
             </nav>
           </div>
