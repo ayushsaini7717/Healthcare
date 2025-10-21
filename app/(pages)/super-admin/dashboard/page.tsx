@@ -27,7 +27,7 @@ export default function SuperAdminDashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin");
+      const res = await fetch("/api/super-admin");
       if (!res.ok) {
         throw new Error("Failed to fetch pending hospitals");
       }
@@ -56,7 +56,7 @@ export default function SuperAdminDashboard() {
 
     setActionLoading(hospitalId);
     try {
-      const res = await fetch("/api/admin", {
+      const res = await fetch("/api/super-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
