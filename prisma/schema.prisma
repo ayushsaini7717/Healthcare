@@ -77,6 +77,7 @@ address   String
 city      String
 phone     String?
 status    HospitalStatus @default(PENDING_REVIEW)
+applicantEmail String?
 createdAt DateTime @default(now())
 updatedAt DateTime @updatedAt
 

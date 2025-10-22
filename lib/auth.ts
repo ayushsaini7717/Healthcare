@@ -48,6 +48,7 @@ export const authOptions = {
           id: user.id,
           username: user.email,
           email: user.email,
+          hospitalId: user.hospitalId
         };
       },
     }),
@@ -65,26 +66,28 @@ export const authOptions = {
   },
    callbacks: {
     async signIn({ user, account, profile }: any) {
-      if (account.provider === "github") {
+      if (account.provider === "github" || account.provider === "google") {
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email },
         });
 
         if (!existingUser) {
-          await prisma.user.create({
+          const newUser = await prisma.user.create({
             data: {
               email: user.email!,
-              name: user.name || profile?.login || "GitHub User",
+              name: user.name || profile?.login || "User",
               password: "", 
-              role: "PATIENT", 
-              isEmailVerified: true, 
+              role: "PATIENT",
+              isEmailVerified: true,
             },
           });
-        }
-        if (existingUser) {
+          user.id = newUser.id;
+          user.role = newUser.role;
+          user.hospitalId = newUser.hospitalId; 
+        } else {
           user.id = existingUser.id;
-          user.role = existingUser.role; 
-          user.email = existingUser.email;
+          user.role = existingUser.role;
+          user.hospitalId = existingUser.hospitalId; 
         }
       }
       return true;
@@ -94,6 +97,7 @@ export const authOptions = {
         token.id = user.id;
         token.email = user.email;
         token.role = user.role;
+        token.hospitalId = user.hospitalId;
       } else if (token.email && !token.role) {
         const dbUser = await prisma.user.findUnique({
             where: { email: token.email },
@@ -111,6 +115,7 @@ export const authOptions = {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.role = token.role as 'PATIENT' | 'HOSPITAL_ADMIN' | 'SUPER_ADMIN'; 
+        session.user.hospitalId = token.hospitalId as string | null;
       }
       return session;
     },
