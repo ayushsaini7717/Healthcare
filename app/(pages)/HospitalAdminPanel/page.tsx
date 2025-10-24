@@ -258,7 +258,7 @@ const TimeSlotManagement = () => {
     const [success, setSuccess] = useState("");
 
     const [newSlot, setNewSlot] = useState({
-        doctorId: 'general', // 'general' for video/non-specific, or a doctor ID
+        doctorId: 'general', 
         startTime: '',
         endTime: '',
     });
