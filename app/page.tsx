@@ -1,40 +1,76 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, Heart, Shield, Users, MessageCircle, Phone, MapPin, Star } from "lucide-react"
-import { AppointmentBooking } from "@/components/appointment-booking"
-import { HealthcareChatbot } from "@/components/healthcare-chatbot"
-import { services } from "./constants"
-import { doctors } from "./constants"
-import { Navbar } from "@/components/Navbar"
-import Link from "next/link"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Calendar,
+  Clock,
+  Heart,
+  Shield,
+  Users,
+  MessageCircle,
+  Phone,
+  MapPin,
+  Star,
+  Video,
+} from "lucide-react";
+import { AppointmentBooking } from "@/components/appointment-booking";
+import { HealthcareChatbot } from "@/components/healthcare-chatbot";
+import { services } from "./constants";
+import { doctors } from "./constants";
+import { Navbar } from "@/components/Navbar";
+import Link from "next/link";
+import VideoCall from "@/components/videocalling";
 
 export default function HomePage() {
-  const [showBooking, setShowBooking] = useState(false)
-  const [showChatbot, setShowChatbot] = useState(false)
-
-
+  const [showBooking, setShowBooking] = useState(false);
+  const [showChatbot, setShowChatbot] = useState(false);
+  const [showConsultation, setShowConsultation] = useState(false); 
   return (
     <div className="min-h-screen bg-background">
       <Navbar setShowBooking={setShowBooking} />
-      
 
+      {/* ---------------- Hero Section ---------------- */}
       <section className="py-20 px-4">
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-5xl font-bold text-balance mb-6 text-foreground">Your Health, Our Priority</h2>
+            <h2 className="text-5xl font-bold text-balance mb-6 text-foreground">
+              Your Health, Our Priority
+            </h2>
             <p className="text-xl text-muted-foreground text-pretty mb-8 leading-relaxed">
-              Experience compassionate healthcare with our team of expert doctors. Book appointments easily, get
-              personalized care, and access our AI assistant in Kumaoni language.
+              Experience compassionate healthcare with our team of expert
+              doctors. Book appointments easily, get personalized care, and
+              access our AI assistant in Kumaoni language.
             </p>
+
+            {/* 🟢 Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => setShowBooking(true)} className="rounded-full text-lg px-8 py-6">
+              <Button
+                size="lg"
+                onClick={() => setShowBooking(true)}
+                className="rounded-full text-lg px-8 py-6"
+              >
                 <Calendar className="mr-2 h-5 w-5" />
                 Book Appointment
               </Button>
+
+              <Button
+                size="lg"
+                onClick={() => setShowConsultation(true)}
+                className="rounded-full text-lg px-8 py-6 bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                <Video className="mr-2 h-5 w-5" />
+                Join Consultation
+              </Button>
+
               <Button
                 variant="outline"
                 size="lg"
@@ -49,55 +85,69 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ---------------- Services Section ---------------- */}
       <section id="services" className="py-16 px-4 bg-muted/30">
-  <div className="container mx-auto">
-    <div className="text-center mb-12">
-      <h3 className="text-3xl font-bold text-balance mb-4">Our Services</h3>
-      <p className="text-muted-foreground text-pretty max-w-2xl mx-auto">
-        Comprehensive healthcare services designed to meet all your medical needs with care and expertise.
-      </p>
-    </div>
-    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {services.map((service, index) => (
-        <Card key={index} className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-sm">
-          <CardHeader className="text-center pb-4">
-            <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
-              <service.icon className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle className="text-xl">{service.title}</CardTitle>
-            <CardDescription className="text-pretty">{service.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <div className="flex justify-between items-center mb-4">
-              <Badge variant="secondary" className="rounded-full">
-                {service.price}
-              </Badge>
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {service.duration}
-              </span>
-            </div>
-            <Link href={service.href}>
-              <Button className="w-full rounded-full">
-                View Details
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  </div>
-</section>
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-balance mb-4">
+              Our Services
+            </h3>
+            <p className="text-muted-foreground text-pretty max-w-2xl mx-auto">
+              Comprehensive healthcare services designed to meet all your
+              medical needs with care and expertise.
+            </p>
+          </div>
 
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((service, index) => (
+              <Card
+                key={index}
+                className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-sm"
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
+                    <service.icon className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">{service.title}</CardTitle>
+                  <CardDescription className="text-pretty">
+                    {service.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <div className="flex justify-between items-center mb-4">
+                    <Badge variant="secondary" className="rounded-full">
+                      {service.price}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {service.duration}
+                    </span>
+                  </div>
+                  <Link href={service.href}>
+                    <Button className="w-full rounded-full">
+                      View Details
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      {/* ---------------- Doctors Section ---------------- */}
       <section id="doctors" className="py-16 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-balance mb-4">Meet Our Doctors</h3>
+            <h3 className="text-3xl font-bold text-balance mb-4">
+              Meet Our Doctors
+            </h3>
             <p className="text-muted-foreground text-pretty max-w-2xl mx-auto">
-              Our experienced team of healthcare professionals is dedicated to providing you with the best medical care.
+              Our experienced team of healthcare professionals is dedicated to
+              providing you with the best medical care.
             </p>
           </div>
+
           <div className="grid md:grid-cols-3 gap-8">
             {doctors.map((doctor, index) => (
               <Card
@@ -122,10 +172,15 @@ export default function HomePage() {
                     </Badge>
                     <div className="flex items-center gap-1">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium">{doctor.rating}</span>
+                      <span className="text-sm font-medium">
+                        {doctor.rating}
+                      </span>
                     </div>
                   </div>
-                  <Button className="w-full rounded-full" onClick={() => setShowBooking(true)}>
+                  <Button
+                    className="w-full rounded-full"
+                    onClick={() => setShowBooking(true)}
+                  >
                     Book Consultation
                   </Button>
                 </CardContent>
@@ -135,14 +190,19 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ---------------- Contact Section ---------------- */}
       <section id="contact" className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-balance mb-4">Get In Touch</h3>
+            <h3 className="text-3xl font-bold text-balance mb-4">
+              Get In Touch
+            </h3>
             <p className="text-muted-foreground text-pretty max-w-2xl mx-auto">
-              Have questions? We're here to help. Contact us through any of these channels.
+              Have questions? We're here to help. Contact us through any of
+              these channels.
             </p>
           </div>
+
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <Card className="text-center border-0 shadow-sm">
               <CardContent className="pt-6">
@@ -152,6 +212,7 @@ export default function HomePage() {
                 <p className="text-muted-foreground">24/7 Emergency</p>
               </CardContent>
             </Card>
+
             <Card className="text-center border-0 shadow-sm">
               <CardContent className="pt-6">
                 <MapPin className="h-8 w-8 text-primary mx-auto mb-4" />
@@ -160,6 +221,7 @@ export default function HomePage() {
                 <p className="text-muted-foreground">Almora, Uttarakhand</p>
               </CardContent>
             </Card>
+
             <Card className="text-center border-0 shadow-sm">
               <CardContent className="pt-6">
                 <MessageCircle className="h-8 w-8 text-primary mx-auto mb-4" />
@@ -178,6 +240,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ---------------- Footer ---------------- */}
       <footer className="bg-card border-t border-border py-8 px-4">
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -185,14 +248,35 @@ export default function HomePage() {
             <span className="text-lg font-semibold">HealthCare+</span>
           </div>
           <p className="text-muted-foreground">
-            © 2024 HealthCare+. Providing compassionate care for your health and wellbeing.
+            © 2024 HealthCare+. Providing compassionate care for your health and
+            wellbeing.
           </p>
         </div>
       </footer>
 
-      {showBooking && <AppointmentBooking onClose={() => setShowBooking(false)} />}
+      {/* ---------------- Modals ---------------- */}
+      {showBooking && (
+        <AppointmentBooking onClose={() => setShowBooking(false)} />
+      )}
 
-      {showChatbot && <HealthcareChatbot onClose={() => setShowChatbot(false)} />}
+      {showChatbot && (
+        <HealthcareChatbot onClose={() => setShowChatbot(false)} />
+      )}
+
+      {/* 🟢 Video Consultation Modal */}
+      {showConsultation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="relative bg-white rounded-2xl w-full max-w-6xl h-[90vh] overflow-hidden shadow-2xl">
+            <button
+              onClick={() => setShowConsultation(false)}
+              className="absolute top-3 right-3 bg-emerald-600 text-white rounded-full px-3 py-1 text-sm hover:bg-emerald-700"
+            >
+              ✕
+            </button>
+            <VideoCall />
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }
