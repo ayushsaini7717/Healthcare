@@ -77,22 +77,22 @@ export async function POST(request: Request) {
       }
     }
 
-    const today = new Date().toISOString().split('T')[0]; // e.g. "2025-10-24"
-const startISO = new Date(`${today}T${startTime}:00Z`);
-const endISO = new Date(`${today}T${endTime}:00Z`);
+    const today = new Date().toISOString().split('T')[0]; 
+    const startISO = new Date(`${today}T${startTime}:00Z`);
+    const endISO = new Date(`${today}T${endTime}:00Z`);
 
-const newSlot = await prisma.timeSlot.create({
-  data: {
-    hospitalId: admin.hospitalId,
-    doctorId: doctorId || null,
-    startTime: startISO,
-    endTime: endISO,
-    isBooked: false,
-  },
-  include: {
-    doctor: true,
-  },
-});
+    const newSlot = await prisma.timeSlot.create({
+    data: {
+        hospitalId: admin.hospitalId,
+        doctorId: doctorId || null,
+        startTime: startISO,
+        endTime: endISO,
+        isBooked: false,
+    },
+    include: {
+        doctor: true,
+    },
+    });
 
     return NextResponse.json(newSlot, { status: 201 });
 
