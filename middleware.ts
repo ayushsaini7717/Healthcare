@@ -36,8 +36,7 @@ export const config = {
   matcher: [
     "/hospital-admin/:path*", 
     "/admin/:path*", 
-    "/api/hospital-admin/:path*", 
-    "/api/admin/:path*", 
+    "/api/hospital-admin/:path*",  
     "/super-admin/:path*"
   ],
 };
