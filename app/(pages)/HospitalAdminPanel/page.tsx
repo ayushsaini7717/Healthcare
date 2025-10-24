@@ -17,7 +17,7 @@ const tabs = [
 
 export default function AdminDashboard() {
   const { data: session } = useSession() as any;
-  const [activeTab, setActiveTab] = useState("services");
+  const [activeTab, setActiveTab] = useState("appointments");
 
   const activeTabData = tabs.find((t) => t.id === activeTab);
   const Component = activeTabData?.component;

@@ -53,14 +53,12 @@ export default function HomePage() {
 
             {/* 🟢 Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                onClick={() => setShowBooking(true)}
-                className="rounded-full text-lg px-8 py-6"
-              >
-                <Calendar className="mr-2 h-5 w-5" />
-                Book Appointment
-              </Button>
+               <Button
+                    className="rounded-full text-lg px-8 py-6"
+                    onClick={() => window.location.href=`/appointment-book`}
+                  >
+                    Book Appointment
+                  </Button>
 
               <Button
                 size="lg"
@@ -79,6 +77,12 @@ export default function HomePage() {
               >
                 <MessageCircle className="mr-2 h-5 w-5" />
                 Chat Assistant
+              </Button>
+               <Button
+                  className="rounded-full text-lg px-8 py-6"
+                  onClick={() => window.location.href=`/HospitalAdminPanel`}
+              >
+                  Hospital Admin?
               </Button>
             </div>
           </div>
