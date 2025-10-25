@@ -72,7 +72,7 @@ export default function ServiceManagement() {
         body: JSON.stringify({
           name: newService.name,
           description: newService.description,
-          priceInPaise,
+          price: priceInPaise,
           hospitalId,
         }),
       });
