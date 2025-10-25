@@ -25,6 +25,7 @@ export async function GET(request: Request) {
     const appointments = await prisma.appointment.findMany({
       where: {
         hospitalId: admin.hospitalId,
+        paymentStatus: 'PAID'
       },
       include: {
         patient: { 

@@ -1,67 +1,104 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import prisma from '@/lib/prisma'; 
+import prisma from '@/lib/prisma';
 import { Role } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 
+// Helper to get session and verify admin role
 async function getAdminSession() {
   const session: any = await getServerSession(authOptions as any);
-  
+
   if (!session || !session.user || session.user.role !== Role.HOSPITAL_ADMIN || !session.user.hospitalId) {
     return null;
   }
-  return session.user as { id: string; role: Role; hospitalId: string; hospitalName: string };
+  return session.user as { id: string; role: Role; hospitalId: string; };
 }
 
 
+/**
+ * GET /api/admin/slots
+ * Fetches current time slots for the admin's hospital after cleaning old ones.
+ */
 export async function GET(request: Request) {
   const admin = await getAdminSession();
-  
+
   if (!admin) {
-    return NextResponse.json({ message: 'Forbidden: You must be a Hospital Admin to perform this action.' }, { status: 403 });
+    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   try {
+    // --- NEW: Auto-deletion logic ---
+    // Delete slots that are in the past and were never booked
+    const now = new Date();
+    await prisma.timeSlot.deleteMany({
+      where: {
+        hospitalId: admin.hospitalId,
+        isBooked: false,
+        endTime: {
+          lt: now, // Less than the current time
+        },
+      },
+    });
+    // --- END NEW ---
+
+    // Fetch the remaining slots
     const slots = await prisma.timeSlot.findMany({
       where: {
         hospitalId: admin.hospitalId,
+        // Optional: Filter for future slots only if desired
+        // startTime: {
+        //   gte: now,
+        // }
       },
       include: {
-        doctor: { 
+        doctor: {
           select: {
             id: true,
             name: true,
             specialty: true,
           }
         }
-      }, 
+      },
+      orderBy: {
+        startTime: 'asc', // Sort by start time
+      },
     });
 
     return NextResponse.json(slots, { status: 200 });
 
   } catch (error) {
-    console.error("Error fetching time slots:", error);
+    console.error("Error fetching/cleaning time slots:", error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
 
+/**
+ * POST /api/admin/slots
+ * Creates a new time slot using DateTime objects.
+ */
 export async function POST(request: Request) {
   const admin = await getAdminSession();
-  
+
   if (!admin) {
-    return NextResponse.json({ message: 'Forbidden: You must be a Hospital Admin.' }, { status: 403 });
+    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   try {
     const body = await request.json();
-    const { startTime, endTime, doctorId } = body; 
+    const { startTime, endTime, doctorId } = body; // Expect time strings like "09:00"
 
     if (!startTime || !endTime) {
       return NextResponse.json({ message: 'startTime and endTime are required.' }, { status: 400 });
     }
 
-    
-    if (new Date(`1970-01-01T${endTime}:00Z`) <= new Date(`1970-01-01T${startTime}:00Z`)) {
+    // Basic time format validation (HH:MM)
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+        return NextResponse.json({ message: 'Invalid time format. Use HH:MM.' }, { status: 400 });
+    }
+
+    // Compare time strings directly
+    if (endTime <= startTime) {
       return NextResponse.json({ message: 'End time must be after start time.' }, { status: 400 });
     }
 
@@ -77,21 +114,36 @@ export async function POST(request: Request) {
       }
     }
 
-    const today = new Date().toISOString().split('T')[0]; 
-    const startISO = new Date(`${today}T${startTime}:00Z`);
-    const endISO = new Date(`${today}T${endTime}:00Z`);
+    // --- Create DateTime objects ---
+    // Combine today's date with the provided time string
+    // IMPORTANT: This assumes slots are always created for "today".
+    // If you need to create slots for future dates, the client must send the date too.
+    const today = new Date();
+    today.setHours(0,0,0,0); // Start of today
+
+    const startHour = parseInt(startTime.split(':')[0]);
+    const startMinute = parseInt(startTime.split(':')[1]);
+    const startDateTime = new Date(today);
+    startDateTime.setHours(startHour, startMinute, 0, 0);
+
+    const endHour = parseInt(endTime.split(':')[0]);
+    const endMinute = parseInt(endTime.split(':')[1]);
+    const endDateTime = new Date(today);
+    endDateTime.setHours(endHour, endMinute, 0, 0);
+
+    // --- END Create DateTime ---
 
     const newSlot = await prisma.timeSlot.create({
-    data: {
+      data: {
         hospitalId: admin.hospitalId,
         doctorId: doctorId || null,
-        startTime: startISO,
-        endTime: endISO,
+        startTime: startDateTime, // Use DateTime object
+        endTime: endDateTime, // Use DateTime object
         isBooked: false,
-    },
-    include: {
-        doctor: true,
-    },
+      },
+      include: {
+        doctor: true, // Return doctor info with the new slot
+      },
     });
 
     return NextResponse.json(newSlot, { status: 201 });
@@ -103,11 +155,15 @@ export async function POST(request: Request) {
 }
 
 
+/**
+ * DELETE /api/admin/slots
+ * Deletes an unbooked time slot.
+ */
 export async function DELETE(request: Request) {
   const admin = await getAdminSession();
-  
+
   if (!admin) {
-    return NextResponse.json({ message: 'Forbidden: You must be a Hospital Admin.' }, { status: 403 });
+    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -146,4 +202,3 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
-

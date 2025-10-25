@@ -126,6 +126,10 @@ notes       String?
 paymentStatus String @default("PENDING")
 videoLink   String? // Populated if type is VIDEO_CALL and confirmed
 
+razorpayOrderId   String? @unique // Razorpay Order ID
+razorpayPaymentId String? // Razorpay Payment ID
+razorpaySignature String? // Razorpay Signature
+
 createdAt DateTime @default(now())
 updatedAt DateTime @updatedAt
 
