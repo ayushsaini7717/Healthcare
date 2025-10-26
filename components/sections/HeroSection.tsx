@@ -1,30 +1,34 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Video, MessageCircle, Calendar } from "lucide-react";
+import { Calendar, Video, MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function HeroSection() {
   return (
-    <section className="py-20 px-4 from-emerald-50 via-white to-white">
-      <div className="container mx-auto text-center">
-        <div className="max-w-4xl mx-auto">
-          {/* 🏥 Headline */}
-          <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            Your Health, Our Priority
+    <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-white py-24">
+      <div className="container mx-auto px-6 flex flex-col-reverse md:flex-row items-center justify-between gap-10">
+        {/* Text Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="max-w-2xl text-center md:text-left"
+        >
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
+            Your <span className="text-emerald-600">Health</span>, Our Priority
           </h1>
 
-          {/* 💬 Subtext */}
           <p className="text-lg text-gray-600 mb-10 leading-relaxed">
-            Experience compassionate care with our expert doctors.  
-            Book appointments easily, connect virtually, and manage your health securely — anytime, anywhere.
+            Compassionate care powered by technology - book appointments, consult virtually, 
+            and get AI-powered health guidance anytime, anywhere.
           </p>
 
-          {/* 🎯 CTA Buttons */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
             {/* Book Appointment */}
             <Link href="/appointment-book">
-              <Button className="rounded-full text-lg px-8 py-6">
+              <Button className="rounded-full text-lg px-8 py-6 bg-emerald-600 hover:bg-emerald-700">
                 <Calendar className="mr-2 h-5 w-5" />
                 Book Appointment
               </Button>
@@ -32,7 +36,10 @@ export default function HeroSection() {
 
             {/* Join Consultation */}
             <Link href="/consultation">
-              <Button className="rounded-full text-lg px-8 py-6 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button
+                variant="outline"
+                className="rounded-full text-lg px-8 py-6 border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+              >
                 <Video className="mr-2 h-5 w-5" />
                 Join Consultation
               </Button>
@@ -42,24 +49,28 @@ export default function HeroSection() {
             <Link href="/chat-assistant">
               <Button
                 variant="outline"
-                className="rounded-full text-lg px-8 py-6"
+                className="rounded-full text-lg px-8 py-6 border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 <MessageCircle className="mr-2 h-5 w-5" />
                 Chat Assistant
               </Button>
             </Link>
-
-            {/* Hospital Admin */}
-            <Link href="/HospitalAdminPanel">
-              <Button
-                variant="outline"
-                className="rounded-full text-lg px-8 py-6"
-              >
-                Hospital Admin?
-              </Button>
-            </Link>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Illustration / Image Section */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9 }}
+          className="flex justify-center md:justify-end"
+        >
+          <img
+            src="/hero-illustration.png"
+            alt="Healthcare illustration"
+            className="w-[90%] md:w-[480px] rounded-3xl shadow-md"
+          />
+        </motion.div>
       </div>
     </section>
   );
