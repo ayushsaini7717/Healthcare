@@ -142,7 +142,7 @@ export const Navbar = () => {
           {/* Mobile Auth Buttons */}
           {!session ? (
             <div className="flex flex-col items-center gap-2 pt-3">
-              <Link href="/auth/signup" className="w-3/4">
+              <Link href="/signup" className="w-3/4">
                 <Button className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-full">
                   Sign Up
                 </Button>
