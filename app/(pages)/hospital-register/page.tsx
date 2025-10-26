@@ -66,7 +66,8 @@ export default function HospitalRegistrationPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/hospital/register", {
+      console.log("env:" + process.env.NEXT_PUBLIC_BASE_URL);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/hospital/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -254,7 +255,7 @@ export default function HospitalRegistrationPage() {
                   />
                 </div>
 
-\                <button
+               <button
                   type="submit"
                   disabled={isLoading}
                   className="w-full bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground font-semibold py-6 px-8 rounded-full transition flex items-center justify-center gap-2"
