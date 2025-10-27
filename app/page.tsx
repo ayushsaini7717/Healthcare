@@ -3,7 +3,7 @@
 
 import {Navbar} from "@/components/Navbar";
 import HeroSection from "@/components/sections/HeroSection";
-import {ServicesSection} from "@/components/sections/ServicesSection";
+import ServicesSection from "@/components/sections/ServicesSection";
 import {DoctorsSection} from "@/components/sections/DoctorsSection";
 import {ContactsSection} from "@/components/sections/ContactsSection";
 import {Footer} from "@/components/Footer";
@@ -17,9 +17,8 @@ export default function HomePage() {
       <main>
         <HeroSection />
         <AboutSection/>
-        <ServicesSection setShowBooking={function (value: boolean): void {
-          throw new Error("Function not implemented.");
-        } } />
+        <ServicesSection/>
+        
         <DoctorsSection setShowBooking={function (value: boolean): void {
           throw new Error("Function not implemented.");
         } } />
