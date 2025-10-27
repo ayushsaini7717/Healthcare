@@ -18,7 +18,6 @@ export default function HomePage() {
         <HeroSection />
         <AboutSection/>
         <ServicesSection/>
-        
         <DoctorsSection />
         <ContactsSection />
       </main>
