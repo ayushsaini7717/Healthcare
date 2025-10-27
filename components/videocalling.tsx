@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-const VideoConsultation: React.FC = () => {
+const ConsultationInner: React.FC = () => {
   const searchParams = useSearchParams();
   const roomFromUrl = searchParams.get("roomID") || "";
 
@@ -12,11 +12,11 @@ const VideoConsultation: React.FC = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const zegoInstanceRef = useRef<any>(null);
 
-  // ------------------- Zego Call -------------------
   useEffect(() => {
+    let isMounted = true;
     const startMeeting = async (element: HTMLDivElement) => {
       const appID = 1575355159;
-      const serverSecret = "205ffa826514ea6a8904e66bf029d7e4"; // dev/testing only
+      const serverSecret = "205ffa826514ea6a8904e66bf029d7e4";
 
       const { ZegoUIKitPrebuilt } = await import("@zegocloud/zego-uikit-prebuilt");
 
@@ -34,19 +34,14 @@ const VideoConsultation: React.FC = () => {
       zp.joinRoom({
         container: element,
         sharedLinks: [
-          {
-            name: "Invite Link",
-            url: `${window.location.origin}/consultation?roomID=${meetingId}`,
-          },
+          { name: "Invite Link", url: `${window.location.origin}/consultation?roomID=${meetingId}` },
         ],
         scenario: { mode: ZegoUIKitPrebuilt.OneONoneCall },
         showPreJoinView: true,
       });
     };
 
-    if (isJoined && containerRef.current) {
-      startMeeting(containerRef.current);
-    }
+    if (isJoined && containerRef.current) startMeeting(containerRef.current);
 
     return () => {
       // Cleanup: stop camera/mic and destroy SDK instance
@@ -67,7 +62,6 @@ const VideoConsultation: React.FC = () => {
     window.history.replaceState(null, "", "/consultation"); // clean URL
   };
 
-  // ------------------- Render -------------------
   if (!isJoined) {
     // Step 1: Ask for Meeting ID
     return (
@@ -95,7 +89,6 @@ const VideoConsultation: React.FC = () => {
     );
   }
 
-  // Step 2: Video Call UI
   return (
     <div className="flex flex-col h-screen w-screen from-emerald-100 via-white to-green-50 text-gray-800">
       <header className="flex items-center justify-between px-6 py-3 bg-emerald-600 text-white shadow-md">
@@ -125,4 +118,10 @@ const VideoConsultation: React.FC = () => {
   );
 };
 
-export default VideoConsultation;
+export default function VideoConsultationPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-600">Loading consultation...</div>}>
+      <ConsultationInner />
+    </Suspense>
+  );
+}
