@@ -8,7 +8,7 @@ const ConsultationInner: React.FC = () => {
   const roomFromUrl = searchParams.get("roomID") || "";
 
   const [meetingId, setMeetingId] = useState(roomFromUrl);
-  const [isJoined, setIsJoined] = useState(!!roomFromUrl);
+  const [isJoined, setIsJoined] = useState(!!roomFromUrl); // auto-join if URL has roomID
   const containerRef = useRef<HTMLDivElement | null>(null);
   const zegoInstanceRef = useRef<any>(null);
 
@@ -44,11 +44,11 @@ const ConsultationInner: React.FC = () => {
     if (isJoined && containerRef.current) startMeeting(containerRef.current);
 
     return () => {
-      if (!isMounted && zegoInstanceRef.current) {
+      // Cleanup: stop camera/mic and destroy SDK instance
+      if (zegoInstanceRef.current) {
         zegoInstanceRef.current.destroy();
         zegoInstanceRef.current = null;
       }
-      isMounted = false;
     };
   }, [isJoined, meetingId]);
 
@@ -59,13 +59,15 @@ const ConsultationInner: React.FC = () => {
     }
     setIsJoined(false);
     setMeetingId("");
+    window.history.replaceState(null, "", "/consultation"); // clean URL
   };
 
   if (!isJoined) {
+    // Step 1: Ask for Meeting ID
     return (
       <div className="min-h-screen flex items-center justify-center bg-emerald-50 p-4">
         <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md text-center border border-green-200">
-          <h1 className="text-3xl font-semibold text-emerald-700 mb-6">Join Video Call</h1>
+          <h1 className="text-3xl font-semibold text-emerald-700 mb-6">Join Video Consultation</h1>
           <input
             type="text"
             placeholder="Enter Meeting ID"
@@ -80,7 +82,7 @@ const ConsultationInner: React.FC = () => {
             Join Call
           </button>
           <p className="text-sm text-gray-500 mt-4">
-            Enter or paste the meeting ID shared with you to join the call.
+            Enter the meeting ID shared with you to start your consultation.
           </p>
         </div>
       </div>
@@ -110,7 +112,7 @@ const ConsultationInner: React.FC = () => {
       />
 
       <footer className="py-2 text-center text-xs text-gray-500 border-t border-emerald-200">
-        Powered by <span className="text-emerald-600 font-medium">Zego + BP HealthCare</span>
+        Powered by <span className="text-emerald-600 font-medium">HealthCare+</span>
       </footer>
     </div>
   );
