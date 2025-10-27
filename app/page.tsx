@@ -15,11 +15,11 @@ export default function HomePage() {
       <Navbar />
 
       <main>
-        <HeroSection />
+        <HeroSection/>
         <AboutSection/>
         <ServicesSection/>
-        <DoctorsSection />
-        <ContactsSection />
+        <DoctorsSection/>
+        <ContactsSection/>
       </main>
 
       <Footer />
