@@ -9,7 +9,7 @@ const doctors = [
   {
     name: "Dr. Aditi Sharma",
     specialty: "Cardiologist",
-    image: "/doctors/doctor1.jpg", // Replace with actual image paths in public/doctors/
+    image: "/doctors/doctor1.jpg", 
     availability: "Mon - Fri, 9AM - 5PM",
   },
   {
