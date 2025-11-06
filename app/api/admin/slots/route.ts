@@ -29,13 +29,16 @@ export async function GET(request: Request) {
   try {
     // --- NEW: Auto-deletion logic ---
     // Delete slots that are in the past and were never booked
-    const now = new Date();
+    // --- FIXED: Auto-deletion logic ---
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // start of today
+
     await prisma.timeSlot.deleteMany({
       where: {
         hospitalId: admin.hospitalId,
         isBooked: false,
         endTime: {
-          lt: now, // Less than the current time
+          lt: today, // Delete only slots that ended before today
         },
       },
     });
@@ -72,10 +75,6 @@ export async function GET(request: Request) {
   }
 }
 
-/**
- * POST /api/admin/slots
- * Creates a new time slot using DateTime objects.
- */
 export async function POST(request: Request) {
   const admin = await getAdminSession();
 
@@ -85,20 +84,31 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { startTime, endTime, doctorId } = body; // Expect time strings like "09:00"
+    const { date, startTime, endTime, doctorId } = body;
 
-    if (!startTime || !endTime) {
-      return NextResponse.json({ message: 'startTime and endTime are required.' }, { status: 400 });
+    if (!date || !startTime || !endTime) {
+      return NextResponse.json({ message: 'date, startTime, and endTime are required.' }, { status: 400 });
     }
 
-    // Basic time format validation (HH:MM)
     const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
     if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-        return NextResponse.json({ message: 'Invalid time format. Use HH:MM.' }, { status: 400 });
+      return NextResponse.json({ message: 'Invalid time format. Use HH:MM.' }, { status: 400 });
     }
 
-    // Compare time strings directly
-    if (endTime <= startTime) {
+    const slotDate = new Date(date);
+    if (isNaN(slotDate.getTime())) {
+      return NextResponse.json({ message: 'Invalid date format. Use YYYY-MM-DD.' }, { status: 400 });
+    }
+
+    const startDateTime = new Date(slotDate);
+    const [sh, sm] = startTime.split(':').map(Number);
+    startDateTime.setHours(sh, sm, 0, 0);
+
+    const endDateTime = new Date(slotDate);
+    const [eh, em] = endTime.split(':').map(Number);
+    endDateTime.setHours(eh, em, 0, 0);
+
+    if (endDateTime <= startDateTime) {
       return NextResponse.json({ message: 'End time must be after start time.' }, { status: 400 });
     }
 
@@ -114,36 +124,15 @@ export async function POST(request: Request) {
       }
     }
 
-    // --- Create DateTime objects ---
-    // Combine today's date with the provided time string
-    // IMPORTANT: This assumes slots are always created for "today".
-    // If you need to create slots for future dates, the client must send the date too.
-    const today = new Date();
-    today.setHours(0,0,0,0); // Start of today
-
-    const startHour = parseInt(startTime.split(':')[0]);
-    const startMinute = parseInt(startTime.split(':')[1]);
-    const startDateTime = new Date(today);
-    startDateTime.setHours(startHour, startMinute, 0, 0);
-
-    const endHour = parseInt(endTime.split(':')[0]);
-    const endMinute = parseInt(endTime.split(':')[1]);
-    const endDateTime = new Date(today);
-    endDateTime.setHours(endHour, endMinute, 0, 0);
-
-    // --- END Create DateTime ---
-
     const newSlot = await prisma.timeSlot.create({
       data: {
         hospitalId: admin.hospitalId,
         doctorId: doctorId || null,
-        startTime: startDateTime, // Use DateTime object
-        endTime: endDateTime, // Use DateTime object
+        startTime: startDateTime,
+        endTime: endDateTime,
         isBooked: false,
       },
-      include: {
-        doctor: true, // Return doctor info with the new slot
-      },
+      include: { doctor: true },
     });
 
     return NextResponse.json(newSlot, { status: 201 });
@@ -153,6 +142,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
 
 
 /**

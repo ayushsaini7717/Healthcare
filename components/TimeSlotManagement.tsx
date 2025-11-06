@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Card,
@@ -22,32 +23,32 @@ import {
 } from "lucide-react";
 
 // --------------------------------------------------------------------
-// STAND-IN SESSION HOOK (Replace with actual import in production)
+// TEMP SESSION MOCK (replace with your actual session hook)
 // --------------------------------------------------------------------
 const useSession = () => ({
   data: {
     user: {
-      role: "HOSPITAL_ADMIN", // Mock role
-      hospitalId: "mock-hospital-123", // Mock ID
+      role: "HOSPITAL_ADMIN",
+      hospitalId: "mock-hospital-123",
     },
   },
   status: "authenticated",
 });
 
 // --------------------------------------------------------------------
-// TYPES (from the original file)
+// TYPES
 // --------------------------------------------------------------------
 interface Doctor {
   id: string;
   name: string;
   specialty: string;
-  createdAt: string; // Assuming ISO string
+  createdAt: string;
 }
 
 interface TimeSlot {
   id: string;
-  startTime: string; // ISO DateTime string from API
-  endTime: string; // ISO DateTime string from API
+  startTime: string;
+  endTime: string;
   doctorId: string | null;
   doctor: {
     name: string;
@@ -55,38 +56,45 @@ interface TimeSlot {
   isBooked: boolean;
 }
 
-// ====================================================================
+// --------------------------------------------------------------------
 // API URLs
-// ====================================================================
-const DOCTORS_API_URL = '/api/admin/doctors';
-const SLOTS_API_URL = '/api/admin/slots';
+// --------------------------------------------------------------------
+const DOCTORS_API_URL = "/api/admin/doctors";
+const SLOTS_API_URL = "/api/admin/slots";
 
-// ====================================================================
-// Helper Functions
-// ====================================================================
+// --------------------------------------------------------------------
+// UTILITIES
+// --------------------------------------------------------------------
 const formatDateTimeToTimeString = (isoString: string): string => {
-    try {
-        const date = new Date(isoString);
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    } catch (e) {
-        console.error("Error formatting date:", e);
-        return "Invalid Time";
-    }
+  try {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch (e) {
+    console.error("Error formatting date:", e);
+    return "Invalid Time";
+  }
 };
 
-// ====================================================================
-// Notification Component (Dependency for TimeSlotManagement)
-// ====================================================================
+// --------------------------------------------------------------------
+// Notification Component
+// --------------------------------------------------------------------
 interface NotificationBoxProps {
   type: "success" | "error";
   title: string;
   message: string;
 }
 
-const NotificationBox: React.FC<NotificationBoxProps> = ({ type, title, message }) => {
+const NotificationBox: React.FC<NotificationBoxProps> = ({
+  type,
+  title,
+  message,
+}) => {
   const isSuccess = type === "success";
   const Icon = isSuccess ? CheckCircle : AlertCircle;
-  
   const baseClasses = "p-4 rounded-lg border flex gap-3 shadow-md";
   const colorClasses = isSuccess
     ? "bg-green-100 border-green-200"
@@ -106,9 +114,9 @@ const NotificationBox: React.FC<NotificationBoxProps> = ({ type, title, message 
   );
 };
 
-// ====================================================================
-// TIME SLOT MANAGEMENT COMPONENT
-// ====================================================================
+// --------------------------------------------------------------------
+// MAIN COMPONENT
+// --------------------------------------------------------------------
 const TimeSlotManagement = () => {
   const { data: session } = useSession() as any;
   const hospitalId = session?.user?.hospitalId;
@@ -120,12 +128,15 @@ const TimeSlotManagement = () => {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newSlot, setNewSlot] = useState({
-    startTime: "09:00", // Default start time
-    endTime: "10:00",   // Default end time
-    doctorId: "general", // 'general' for video calls
+    date: new Date().toISOString().split("T")[0], // Default = today
+    startTime: "09:00",
+    endTime: "10:00",
+    doctorId: "general",
   });
 
-  // Fetch both Doctors (for the dropdown) and existing Slots
+  // --------------------------------------------------------------------
+  // Fetch Doctors and Slots
+  // --------------------------------------------------------------------
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -142,11 +153,18 @@ const TimeSlotManagement = () => {
 
       const docData: Doctor[] = await docResponse.json();
       const slotData: TimeSlot[] = await slotResponse.json();
-      
+
       setDoctors(docData);
-      setSlots(slotData);
+      setSlots(
+        slotData.sort(
+          (a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        )
+      );
     } catch (err: any) {
-      setError(err.message || "An unknown error occurred while fetching data.");
+      setError(
+        err.message || "An unknown error occurred while fetching data."
+      );
     } finally {
       setLoading(false);
     }
@@ -156,7 +174,9 @@ const TimeSlotManagement = () => {
     if (hospitalId) fetchData();
   }, [hospitalId, fetchData]);
 
+  // --------------------------------------------------------------------
   // Add Time Slot
+  // --------------------------------------------------------------------
   const handleAddSlot = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -164,15 +184,16 @@ const TimeSlotManagement = () => {
     setSuccess("");
 
     const payload = {
-      startTime: newSlot.startTime, // Send as "HH:MM"
-      endTime: newSlot.endTime,     // Send as "HH:MM"
+      date: newSlot.date,
+      startTime: newSlot.startTime,
+      endTime: newSlot.endTime,
       doctorId: newSlot.doctorId === "general" ? null : newSlot.doctorId,
     };
 
     try {
       const response = await fetch(SLOTS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -182,8 +203,21 @@ const TimeSlotManagement = () => {
       }
 
       const addedSlot: TimeSlot = await response.json();
-      setSlots((prev) => [...prev, addedSlot].sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())); // Keep sorted
+      setSlots((prev) =>
+        [...prev, addedSlot].sort(
+          (a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        )
+      );
       setSuccess("Time slot added successfully!");
+
+      // Reset form
+      setNewSlot((prev) => ({
+        ...prev,
+        startTime: "09:00",
+        endTime: "10:00",
+      }));
+
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: any) {
       setError(err.message || "Error adding time slot.");
@@ -192,37 +226,49 @@ const TimeSlotManagement = () => {
     }
   };
 
+  // --------------------------------------------------------------------
   // Delete Time Slot
+  // --------------------------------------------------------------------
   const handleDeleteSlot = async (slotId: string) => {
-    if (!window.confirm("Are you sure you want to delete this time slot? This cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this time slot? This cannot be undone."
+      )
+    ) {
       return;
     }
-    
+
     setError("");
     setSuccess("");
     try {
       const response = await fetch(`${SLOTS_API_URL}?id=${slotId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const errData = await response.json();
         throw new Error(errData.message || "Failed to delete slot.");
       }
-      
+
       setSlots((prev) => prev.filter((s) => s.id !== slotId));
       setSuccess("Time slot deleted.");
       setTimeout(() => setSuccess(""), 3000);
-    } catch (err: any)      {
+    } catch (err: any) {
       setError(err.message || "Error deleting time slot.");
     }
   };
 
+  // --------------------------------------------------------------------
+  // UI
+  // --------------------------------------------------------------------
   return (
     <div className="space-y-6">
-      {success && <NotificationBox type="success" title="Success" message={success} />}
+      {success && (
+        <NotificationBox type="success" title="Success" message={success} />
+      )}
       {error && <NotificationBox type="error" title="Error" message={error} />}
 
+      {/* ----------------------- CREATE SLOT FORM ----------------------- */}
       <Card className="shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-primary">
@@ -235,15 +281,34 @@ const TimeSlotManagement = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAddSlot} className="space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              {/* Doctor Select */}
+            <div className="grid md:grid-cols-4 gap-4">
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-foreground">
+                  Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={newSlot.date}
+                  onChange={(e) =>
+                    setNewSlot({ ...newSlot, date: e.target.value })
+                  }
+                  required
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+                />
+              </div>
+
+              {/* Doctor */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-foreground">
                   Assign To <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={newSlot.doctorId}
-                  onChange={(e) => setNewSlot({ ...newSlot, doctorId: e.target.value })}
+                  onChange={(e) =>
+                    setNewSlot({ ...newSlot, doctorId: e.target.value })
+                  }
                   className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
                 >
                   <option value="general">General (Video Call)</option>
@@ -263,9 +328,11 @@ const TimeSlotManagement = () => {
                 <input
                   type="time"
                   value={newSlot.startTime}
-                  onChange={(e) => setNewSlot({ ...newSlot, startTime: e.target.value })}
+                  onChange={(e) =>
+                    setNewSlot({ ...newSlot, startTime: e.target.value })
+                  }
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+                  className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
                 />
               </div>
 
@@ -277,14 +344,20 @@ const TimeSlotManagement = () => {
                 <input
                   type="time"
                   value={newSlot.endTime}
-                  onChange={(e) => setNewSlot({ ...newSlot, endTime: e.target.value })}
+                  onChange={(e) =>
+                    setNewSlot({ ...newSlot, endTime: e.target.value })
+                  }
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+                  className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
                 />
               </div>
             </div>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full rounded-full h-10">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded-full h-10"
+            >
               {isSubmitting ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
@@ -300,6 +373,7 @@ const TimeSlotManagement = () => {
         </CardContent>
       </Card>
 
+      {/* ----------------------- ACTIVE SLOTS LIST ----------------------- */}
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -307,11 +381,16 @@ const TimeSlotManagement = () => {
               <List className="h-5 w-5" />
               Active Time Slots
             </CardTitle>
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
-                {slots.length} Slots
+            <Badge
+              variant="secondary"
+              className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+            >
+              {slots.length} Slots
             </Badge>
           </div>
-          <CardDescription>All available appointment slots for your hospital</CardDescription>
+          <CardDescription>
+            All available appointment slots for your hospital
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -320,9 +399,11 @@ const TimeSlotManagement = () => {
               <span className="ml-2 text-muted-foreground">Loading slots...</span>
             </div>
           ) : error && slots.length === 0 ? (
-             <NotificationBox type="error" title="Error" message={error} />
+            <NotificationBox type="error" title="Error" message={error} />
           ) : slots.length === 0 ? (
-             <p className="text-center text-muted-foreground py-4">No time slots created. Add your first slot above.</p>
+            <p className="text-center text-muted-foreground py-4">
+              No time slots created. Add your first slot above.
+            </p>
           ) : (
             <div className="space-y-3">
               {slots.map((slot) => (
@@ -331,7 +412,11 @@ const TimeSlotManagement = () => {
                   className="p-4 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors flex justify-between items-center shadow-sm"
                 >
                   <div className="flex items-center gap-4">
-                     <div className={`p-2 rounded-full ${slot.doctorId ? 'bg-primary/10' : 'bg-green-500/10'}`}>
+                    <div
+                      className={`p-2 rounded-full ${
+                        slot.doctorId ? "bg-primary/10" : "bg-green-500/10"
+                      }`}
+                    >
                       {slot.doctorId ? (
                         <Stethoscope className="h-5 w-5 text-primary" />
                       ) : (
@@ -340,21 +425,30 @@ const TimeSlotManagement = () => {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">
-                        {formatDateTimeToTimeString(slot.startTime)} – {formatDateTimeToTimeString(slot.endTime)}
+                        {new Date(slot.startTime).toLocaleDateString()}{" "}
+                        ({formatDateTimeToTimeString(slot.startTime)} –{" "}
+                        {formatDateTimeToTimeString(slot.endTime)})
                       </p>
                       <p className="text-sm text-muted-foreground font-medium">
                         {slot.doctor ? slot.doctor.name : "General Video Call"}
                       </p>
                     </div>
                   </div>
-                  {/* Disable delete if slot is booked */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`text-muted-foreground hover:text-destructive hover:bg-destructive/10 ${slot.isBooked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => !slot.isBooked && handleDeleteSlot(slot.id)}
+                    className={`text-muted-foreground hover:text-destructive hover:bg-destructive/10 ${
+                      slot.isBooked ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={() =>
+                      !slot.isBooked && handleDeleteSlot(slot.id)
+                    }
                     disabled={slot.isBooked}
-                    title={slot.isBooked ? "Cannot delete a booked slot" : "Delete slot"}
+                    title={
+                      slot.isBooked
+                        ? "Cannot delete a booked slot"
+                        : "Delete slot"
+                    }
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

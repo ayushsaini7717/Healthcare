@@ -46,7 +46,7 @@ export default function HeroSection() {
             </Link>
 
             {/* Chat Assistant */}
-            <Link href="http://127.0.0.1:5000">
+            <Link href="/chat">
               <Button
                 variant="outline"
                 className="rounded-full text-lg px-8 py-6 border-gray-300 text-gray-700 hover:bg-gray-50"
