@@ -19,6 +19,15 @@ export default function HeroSection() {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
             Your <span className="text-emerald-600">Health</span>, Our Priority
           </h1>
+          <Link href="/ambulances/register">
+              <Button
+                variant="outline"
+                className="rounded-full text-lg px-8 py-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Ambulance Register
+              </Button>
+            </Link>
 
           <p className="text-lg text-gray-600 mb-10 leading-relaxed">
             Compassionate care powered by technology - book appointments, consult virtually, 
@@ -53,6 +62,15 @@ export default function HeroSection() {
               >
                 <MessageCircle className="mr-2 h-5 w-5" />
                 Chat Assistant
+              </Button>
+            </Link>
+            <Link href="/ambulances">
+              <Button
+                variant="outline"
+                className="rounded-full text-lg px-8 py-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Ambulance Find
               </Button>
             </Link>
           </div>

@@ -32,6 +32,11 @@ PENDING_REVIEW
 APPROVED
 REJECTED
 }
+enum AmbulanceStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
 
 
 model User {
@@ -160,6 +165,8 @@ driverName String
 licensePlate String @unique
 region    String // Area of operation
 isAvailable Boolean @default(true)
+contactNumber String  
+status        AmbulanceStatus @default(PENDING_REVIEW) 
 hospitalId String? // Associated with a hospital, but could be independent
 createdAt DateTime @default(now())
 updatedAt DateTime @updatedAt
