@@ -39,9 +39,9 @@ export const Navbar = () => {
           <Link href="#services" className="text-gray-600 hover:text-emerald-600 font-medium">
             Services
           </Link>
-          <Link href="#doctors" className="text-gray-600 hover:text-emerald-600 font-medium">
+          {/* <Link href="#doctors" className="text-gray-600 hover:text-emerald-600 font-medium">
             Doctors
-          </Link>
+          </Link> */}
           <Link href="#contact" className="text-gray-600 hover:text-emerald-600 font-medium">
             Contact
           </Link>
