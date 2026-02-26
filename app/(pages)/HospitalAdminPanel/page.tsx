@@ -7,12 +7,15 @@ import DoctorManagement from "@/components/DoctorManagement";
 import TimeSlotManagement from "@/components/TimeSlotManagement";
 import AppointmentManagement from "@/components/AppointmentManagement";
 import ServiceManagement from "@/components/ServiceManagement";
+import BrainTumorPrediction from "@/components/BrainTumorPrediction";
+
 
 const tabs = [
   { id: "appointments", label: "Appointments", icon: Calendar, component: AppointmentManagement },
   { id: "doctors", label: "Doctors", icon: Stethoscope, component: DoctorManagement },
   { id: "slots", label: "Time Slots", icon: Clock, component: TimeSlotManagement },
   { id: "services", label: "Services & Pricing", icon: IndianRupee, component: ServiceManagement },
+  { id: "tumor-prediction", label: "Brain Tumor Prediction", icon: TrendingUp, component: BrainTumorPrediction },
 ];
 
 export default function AdminDashboard() {

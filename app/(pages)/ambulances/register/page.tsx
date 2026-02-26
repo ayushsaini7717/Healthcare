@@ -130,3 +130,22 @@ export default function AmbulanceRegisterPage() {
     </section>
   );
 }
+
+
+
+
+
+
+
+
+
+
+// virtual assistant in unavailability of doctor for minor health problem
+// consultation with video call
+// chat/voice assistant (assist patient in traditional uttrakhand ground languages)
+// emergency ambulance services in remote hilly locations
+// payment gateway for consultations and lab report
+// encrypted security
+// role based access
+// contribute in digital India initiative and Government of India
+// saperate model for brain tumour detection

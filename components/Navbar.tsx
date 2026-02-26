@@ -27,8 +27,9 @@ export const Navbar = () => {
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Heart className="h-7 w-7 text-emerald-600" />
+        <Link href="/" className="flex justify-center items-center gap-2">
+          <img height={100} width={100} src="/digital.png"></img>
+          <img height={50} width={50} src="/btkitlogo1.jpeg"></img>
           <span className="text-2xl font-bold text-gray-900 tracking-tight">
             Health<span className="text-emerald-600">Care+</span>
           </span>
@@ -166,6 +167,7 @@ export const Navbar = () => {
               >
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
+              
             </div>
           )}
         </div>

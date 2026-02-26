@@ -8,15 +8,15 @@ const ConsultationInner: React.FC = () => {
   const roomFromUrl = searchParams.get("roomID") || "";
 
   const [meetingId, setMeetingId] = useState(roomFromUrl);
-  const [isJoined, setIsJoined] = useState(!!roomFromUrl); // auto-join if URL has roomID
+  const [isJoined, setIsJoined] = useState(!!roomFromUrl); 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const zegoInstanceRef = useRef<any>(null);
 
   useEffect(() => {
     let isMounted = true;
     const startMeeting = async (element: HTMLDivElement) => {
-      const appID = 1575355159;
-      const serverSecret = "205ffa826514ea6a8904e66bf029d7e4";
+      const appID = 1556082826;
+      const serverSecret = "dc719e187e01d9f60859b535212a71d8";
 
       const { ZegoUIKitPrebuilt } = await import("@zegocloud/zego-uikit-prebuilt");
 

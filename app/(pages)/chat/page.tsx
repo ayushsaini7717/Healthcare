@@ -2,25 +2,19 @@
 
 import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Send, Bot, Mic, MicOff, Volume2 } from "lucide-react";
+import { Send, Bot, Mic, MicOff, Volume2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default function ChatAssistantPage() {
-  const [messages, setMessages] = useState<{ sender: "user" | "bot"; text: string }[]>([
-    {
-      sender: "bot",
-      text: "👋 Hello! I’m your healthcare assistant. How can I help you today?",
-    },
-  ]);
+  const [messages, setMessages] = useState<{ sender: "user" | "bot"; text: string }[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
-  const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const [language, setLanguage] = useState<"en" | "hi" | "garhwali" | "kumaoni">("en");
 
-  // -----------------------
-  // 🎙️ Speech-to-Text (STT)
-  // -----------------------
+  const recognitionRef = useRef<any>(null);
+
   const handleSpeechToText = () => {
     if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
       alert("Speech recognition not supported in your browser.");
@@ -33,7 +27,11 @@ export default function ChatAssistantPage() {
     if (!recognitionRef.current) {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
-      recognitionRef.current.lang = "en-US";
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang =
+        language === "hi" || language === "garhwali" || language === "kumaoni"
+          ? "hi-IN"
+          : "en-US";
 
       recognitionRef.current.onstart = () => setListening(true);
       recognitionRef.current.onend = () => setListening(false);
@@ -45,24 +43,35 @@ export default function ChatAssistantPage() {
       };
     }
 
-    recognitionRef.current.start();
+    if (listening) {
+      recognitionRef.current.stop();
+      return;
+    }
+
+    try {
+      recognitionRef.current.start();
+    } catch {
+      recognitionRef.current.stop();
+      setTimeout(() => recognitionRef.current.start(), 400);
+    }
   };
 
-  // ------------------------
   // 🔊 Text-to-Speech (TTS)
-  // ------------------------
   const speak = (text: string) => {
     if (!window.speechSynthesis) return;
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-IN";
-    utterance.rate = 1.0;
-    utterance.pitch = 1.1;
+
+    if (language === "garhwali" || language === "kumaoni" || language === "hi")
+      utterance.lang = "hi-IN";
+    else utterance.lang = "en-IN";
+
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
   };
 
-  // ------------------------
-  // 💬 Handle Send
-  // ------------------------
+  // 🤖 Gemini API — Enforced Language and Written Response
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -74,37 +83,74 @@ export default function ChatAssistantPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://mchat-backend-isxf.onrender.com/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sessionIdRef.current,
-          message: userInput,
-        }),
-      });
+      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-      if (!res.ok) throw new Error("Server error");
-      const data = await res.json();
+      const historyText = messages
+        .map((msg) => `${msg.sender === "user" ? "User" : "Assistant"}: ${msg.text}`)
+        .join("\n");
 
-      // ✅ Expected structure:
-      // {
-      //   "session_id": "...",
-      //   "intent": "greeting",
-      //   "entities": {},
-      //   "reply": "Hello! I’m your healthcare assistant. How can I help you today?"
-      // }
+const prompt = `
+You are a kind, trustworthy, and multilingual virtual health assistant 
+who helps patients when a doctor is not available. 
 
-      const botReply = {
-        sender: "bot",
-        text: data.reply || "🤖 Sorry, I couldn’t process that.",
-      };
+Your role is to:
+- Calmly understand the user's symptoms or situation.
+- Give helpful, safe, and practical health guidance using natural or home remedies.
+- Share simple self-care routines, diet tips, yoga, breathing exercises, and herbal or household remedies.
+- Speak politely and comfortingly, as if caring for a friend or family member.
+
+🚫 Never say things like:
+"consult a doctor", "go to the hospital", "see a professional", or "I am not a doctor".
+
+✅ Instead, always focus on what the person *can do at home* safely — 
+using kitchen ingredients, rest, hydration, gentle stretches, or mindfulness.
+
+If there is no known medical cure, suggest natural ways to reduce discomfort 
+or strengthen immunity.
+
+Always reply **strictly and completely in the selected language "${language}"**.  
+Write in that language’s **native script**, never in English transliteration.
+
+Supported languages:
+- English (en)
+- Hindi (hi)
+- Garhwali (garhwali)
+- Kumaoni (kumaoni)
+
+When responding in Garhwali or Kumaoni, use natural Devanagari script and 
+a local conversational tone.  
+Do not sound like Hindi — use local words and phrasing when possible.
+
+Examples:
+• Garhwali → "तू केम छो? मैं ठिक छु।"  
+• Kumaoni → "तू क्ये हाल छो? मैं ठिक छु।"
+
+Keep your tone empathetic, simple, and encouraging — like a friendly village health guide.
+
+Now continue the conversation below in ${language} only.
+
+Conversation so far:
+${historyText}
+
+User: ${userInput}
+
+Assistant (reply fully written in ${language}, providing calm, home-based remedies and care tips only):
+Give answer in only one or two lines`;
+
+
+      const result = await model.generateContent(prompt);
+      const reply = result.response.text().trim();
+
+      const botReply = { sender: "bot", text: reply };
       //@ts-ignore
       setMessages((prev) => [...prev, botReply]);
       speak(botReply.text);
     } catch (err) {
+      console.error("Gemini error:", err);
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "⚠️ Something went wrong. Please try again later." },
+        { sender: "bot", text: "⚠️ कुछ त्रुटि हुई। कृपया पुनः प्रयास करें।" },
       ]);
     } finally {
       setLoading(false);
@@ -115,9 +161,7 @@ export default function ChatAssistantPage() {
     if (e.key === "Enter" && !loading) handleSend();
   };
 
-  // ------------------------
   // 💎 UI
-  // ------------------------
   return (
     <section className="relative min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white py-16 px-6 flex flex-col items-center">
       <motion.div
@@ -127,9 +171,28 @@ export default function ChatAssistantPage() {
         className="w-full max-w-3xl bg-white rounded-3xl shadow-xl border border-emerald-100 p-6 flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <Bot className="h-6 w-6 text-emerald-600" />
-          <h1 className="text-2xl font-semibold text-gray-800">Health Chat Assistant</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Bot className="h-6 w-6 text-emerald-600" />
+            <h1 className="text-2xl font-semibold text-gray-800">Health Chat Assistant</h1>
+          </div>
+
+          {/* 🌐 Language Dropdown */}
+          <div className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-emerald-600" />
+            <select
+              value={language}
+              onChange={(e) =>
+                setLanguage(e.target.value as "en" | "hi" | "garhwali" | "kumaoni")
+              }
+              className="border border-emerald-400 rounded-full px-4 py-2 text-sm text-emerald-700 bg-white focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+            >
+              <option value="hi">हिन्दी</option>
+              <option value="en">English</option>
+              <option value="garhwali">गढ़वाली</option>
+              <option value="kumaoni">कुमाऊँनी</option>
+            </select>
+          </div>
         </div>
 
         {/* Chat Messages */}
@@ -143,7 +206,7 @@ export default function ChatAssistantPage() {
               className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-sm ${
+                className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm shadow-sm whitespace-pre-wrap ${
                   msg.sender === "user"
                     ? "bg-emerald-600 text-white rounded-br-none"
                     : "bg-gray-100 text-gray-800 rounded-bl-none"
@@ -161,9 +224,17 @@ export default function ChatAssistantPage() {
               </div>
             </div>
           )}
+
+          {listening && (
+            <div className="flex justify-start">
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2 rounded-full text-xs font-medium animate-pulse">
+                🎤 Listening...
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Input + Controls */}
+        {/* Input Controls */}
         <div className="flex items-center gap-3 mt-2">
           <input
             type="text"
@@ -174,7 +245,7 @@ export default function ChatAssistantPage() {
             className="flex-1 border border-gray-300 rounded-full px-5 py-3 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
           />
 
-          {/* 🎙️ Voice Input Button */}
+          {/* 🎙️ STT */}
           <Button
             onClick={handleSpeechToText}
             type="button"
@@ -186,7 +257,7 @@ export default function ChatAssistantPage() {
             {listening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
           </Button>
 
-          {/* Send Button */}
+          {/* 🚀 Send */}
           <Button
             onClick={handleSend}
             disabled={loading}
@@ -195,9 +266,9 @@ export default function ChatAssistantPage() {
             <Send className="h-5 w-5" />
           </Button>
 
-          {/* 🔊 Manual TTS Button */}
+          {/* 🔊 Manual TTS */}
           <Button
-            onClick={() => speak(input || "Hello, how can I assist you?")}
+            onClick={() => speak(input || "Hello")}
             variant="outline"
             className="rounded-full p-3 text-gray-700"
           >
