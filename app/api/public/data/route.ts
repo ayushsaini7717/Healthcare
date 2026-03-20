@@ -8,15 +8,15 @@ export async function GET(request: Request) {
   const hospitalId = searchParams.get('hospitalId');
 
   try {
-   
+
     if (type === 'hospitals') {
       const hospitals = await prisma.hospital.findMany({
-        where: { status: HospitalStatus.APPROVED }, 
+        where: { status: HospitalStatus.APPROVED },
         select: { id: true, name: true, city: true }
       });
       return NextResponse.json(hospitals);
     }
-   
+
     if (!hospitalId) {
       return NextResponse.json({ message: 'hospitalId is required for this data type.' }, { status: 400 });
     }
@@ -41,27 +41,29 @@ export async function GET(request: Request) {
       const doctorId = searchParams.get('doctorId');
       const date = searchParams.get('date'); // e.g., "2025-10-25"
 
-      if (!date || !doctorId) {
-        return NextResponse.json({ message: 'doctorId and date are required to fetch slots.' }, { status: 400 });
+      if (!date) {
+        return NextResponse.json({ message: 'date is required to fetch slots.' }, { status: 400 });
       }
 
       const startDate = new Date(date);
-      startDate.setUTCHours(0, 0, 0, 0); 
-      
+      startDate.setUTCHours(0, 0, 0, 0);
+
       const endDate = new Date(date);
       endDate.setUTCHours(23, 59, 59, 999);
+
+      // If doctorId is 'general' or 'video-doc' or missing, we look for slots with no doctorId
+      const targetDoctorId = (doctorId === 'general' || doctorId === 'video-doc' || !doctorId) ? null : doctorId;
 
       const slots = await prisma.timeSlot.findMany({
         where: {
           hospitalId: hospitalId,
-          doctorId: doctorId === 'general' ? null : doctorId, 
-          isBooked: false, 
+          doctorId: targetDoctorId,
           startTime: {
-            gte: startDate, 
-            lt: endDate,    
+            gte: startDate,
+            lt: endDate,
           }
         },
-        select: { id: true, startTime: true, endTime: true },
+        select: { id: true, startTime: true, endTime: true, isBooked: true },
         orderBy: { startTime: 'asc' }
       });
       return NextResponse.json(slots);

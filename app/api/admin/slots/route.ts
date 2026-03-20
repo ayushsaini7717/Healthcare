@@ -84,62 +84,52 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { date, startTime, endTime, doctorId } = body;
 
-    if (!date || !startTime || !endTime) {
-      return NextResponse.json({ message: 'date, startTime, and endTime are required.' }, { status: 400 });
+    // Check if it's an array of slots (bulk) or a single slot
+    const slotsToCreate = Array.isArray(body) ? body : [body];
+
+    if (slotsToCreate.length === 0) {
+      return NextResponse.json({ message: 'No slots provided.' }, { status: 400 });
     }
 
-    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-      return NextResponse.json({ message: 'Invalid time format. Use HH:MM.' }, { status: 400 });
-    }
+    const createdSlots = [];
 
-    const slotDate = new Date(date);
-    if (isNaN(slotDate.getTime())) {
-      return NextResponse.json({ message: 'Invalid date format. Use YYYY-MM-DD.' }, { status: 400 });
-    }
+    // Use a transaction for bulk creation
+    const results = await prisma.$transaction(
+      slotsToCreate.map((slotData: any) => {
+        const { date, startTime, endTime, doctorId } = slotData;
 
-    const startDateTime = new Date(slotDate);
-    const [sh, sm] = startTime.split(':').map(Number);
-    startDateTime.setHours(sh, sm, 0, 0);
-
-    const endDateTime = new Date(slotDate);
-    const [eh, em] = endTime.split(':').map(Number);
-    endDateTime.setHours(eh, em, 0, 0);
-
-    if (endDateTime <= startDateTime) {
-      return NextResponse.json({ message: 'End time must be after start time.' }, { status: 400 });
-    }
-
-    if (doctorId) {
-      const doctor = await prisma.doctor.findFirst({
-        where: {
-          id: doctorId,
-          hospitalId: admin.hospitalId,
+        if (!date || !startTime || !endTime) {
+          throw new Error('date, startTime, and endTime are required for all slots.');
         }
-      });
-      if (!doctor) {
-        return NextResponse.json({ message: 'Invalid Doctor ID or Doctor does not belong to this hospital.' }, { status: 404 });
-      }
-    }
 
-    const newSlot = await prisma.timeSlot.create({
-      data: {
-        hospitalId: admin.hospitalId,
-        doctorId: doctorId || null,
-        startTime: startDateTime,
-        endTime: endDateTime,
-        isBooked: false,
-      },
-      include: { doctor: true },
-    });
+        const slotDate = new Date(date);
+        const startDateTime = new Date(slotDate);
+        const [sh, sm] = startTime.split(':').map(Number);
+        startDateTime.setHours(sh, sm, 0, 0);
 
-    return NextResponse.json(newSlot, { status: 201 });
+        const endDateTime = new Date(slotDate);
+        const [eh, em] = endTime.split(':').map(Number);
+        endDateTime.setHours(eh, em, 0, 0);
 
-  } catch (error) {
-    console.error("Error creating time slot:", error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+        return prisma.timeSlot.create({
+          data: {
+            hospitalId: admin.hospitalId,
+            doctorId: (doctorId === 'general' || !doctorId) ? null : doctorId,
+            startTime: startDateTime,
+            endTime: endDateTime,
+            isBooked: false,
+          },
+          include: { doctor: true },
+        });
+      })
+    );
+
+    return NextResponse.json(results, { status: 201 });
+
+  } catch (error: any) {
+    console.error("Error creating time slots:", error);
+    return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
@@ -176,7 +166,7 @@ export async function DELETE(request: Request) {
     }
 
     if (slot.isBooked) {
-       return NextResponse.json({ message: 'Cannot delete a slot that is already booked by a patient.' }, { status: 409 }); // 409 Conflict
+      return NextResponse.json({ message: 'Cannot delete a slot that is already booked by a patient.' }, { status: 409 }); // 409 Conflict
     }
 
     await prisma.timeSlot.delete({

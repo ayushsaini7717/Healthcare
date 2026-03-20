@@ -113,20 +113,20 @@ const NotificationBox: React.FC<NotificationBoxProps> = ({
     type === "success"
       ? CheckCircle
       : type === "error"
-      ? AlertCircle
-      : Info;
+        ? AlertCircle
+        : Info;
   const colorClasses =
     type === "success"
       ? "bg-green-100 border-green-200 text-green-700"
       : type === "error"
-      ? "bg-red-100 border-red-200 text-red-700"
-      : "bg-blue-100 border-blue-200 text-blue-700";
+        ? "bg-red-100 border-red-200 text-red-700"
+        : "bg-blue-100 border-blue-200 text-blue-700";
   const iconColor =
     type === "success"
       ? "text-green-600"
       : type === "error"
-      ? "text-red-600"
-      : "text-blue-600";
+        ? "text-red-600"
+        : "text-blue-600";
 
   return (
     <div
@@ -162,6 +162,45 @@ const formatDate = (isoDate: string) =>
     day: "numeric",
   });
 
+const generateReceipt = (data: any) => {
+  const { hospital, doctor, service, date, time } = data;
+  const receiptHtml = `
+    <html>
+      <head>
+        <title>Appointment Receipt</title>
+        <style>
+          body { font-family: sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          .header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+          .detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+          .label { font-weight: bold; color: #666; }
+          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #999; }
+          @media print { .no-print { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>HealthCare+</h1>
+          <p>Appointment Receipt</p>
+        </div>
+        <div class="detail-row"><span class="label">Hospital:</span><span>${hospital?.name}</span></div>
+        <div class="detail-row"><span class="label">Doctor:</span><span>${doctor?.name || "General"}</span></div>
+        <div class="detail-row"><span class="label">Service:</span><span>${service?.name}</span></div>
+        <div class="detail-row"><span class="label">Date:</span><span>${date}</span></div>
+        <div class="detail-row"><span class="label">Time:</span><span>${time}</span></div>
+        <div class="detail-row"><span class="label">Amount Paid:</span><span style="font-weight: bold;">₹${(service?.price / 100).toFixed(2)}</span></div>
+        <div class="footer">
+          <p>Thank you for using HealthCare+. Please present this receipt at the hospital counter.</p>
+          <p>Generated on ${new Date().toLocaleString()}</p>
+        </div>
+        <button onclick="window.print()" class="no-print" style="margin-top: 30px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%;">Print / Save as PDF</button>
+      </body>
+    </html>
+  `;
+  const win = window.open("", "_blank");
+  win?.document.write(receiptHtml);
+  win?.document.close();
+};
+
 // --------------------------------------------------------------------
 // MAIN COMPONENT
 // --------------------------------------------------------------------
@@ -191,6 +230,7 @@ export default function PatientBookingForm() {
     "IN_PERSON" | "VIDEO_CALL"
   >("IN_PERSON");
   const [notes, setNotes] = useState("");
+  const [confirmedAppointmentId, setConfirmedAppointmentId] = useState<string | null>(null);
 
   const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
@@ -267,13 +307,14 @@ export default function PatientBookingForm() {
       try {
         setLoading(true);
         const doctorQuery =
-          selectedDoctor.id === "video-doc"
-            ? ""
+          !selectedDoctor || selectedDoctor.id === "video-doc"
+            ? "&doctorId=general"
             : `&doctorId=${selectedDoctor.id}`;
         const url = `${PUBLIC_API_URL}?type=slots&hospitalId=${selectedHospital.id}&date=${selectedDate}${doctorQuery}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error("Failed to fetch slots.");
-        setTimeSlots(await res.json());
+        const data = await res.json();
+        setTimeSlots(data);
       } catch (err: any) {
         setError(err.message);
         setTimeSlots([
@@ -295,8 +336,20 @@ export default function PatientBookingForm() {
   // --------------------------------------------------------------------
   // Navigation
   // --------------------------------------------------------------------
-  const nextStep = () => setStep((s) => s + 1);
-  const prevStep = () => setStep((s) => s - 1);
+  const nextStep = () => {
+    if (step === 2 && appointmentType === "IN_PERSON") {
+      setStep(4); // Skip slot selection for in-person
+    } else {
+      setStep((s) => s + 1);
+    }
+  };
+  const prevStep = () => {
+    if (step === 4 && appointmentType === "IN_PERSON") {
+      setStep(2);
+    } else {
+      setStep((s) => s - 1);
+    }
+  };
 
   // --------------------------------------------------------------------
   // Payment
@@ -311,11 +364,18 @@ export default function PatientBookingForm() {
       !selectedHospital ||
       !selectedDoctor ||
       !selectedService ||
-      !selectedTimeSlot
+      (appointmentType === "VIDEO_CALL" && !selectedTimeSlot)
     ) {
       setError("Missing booking details.");
       return;
     }
+
+    const startTime = appointmentType === "VIDEO_CALL"
+      ? selectedTimeSlot?.startTime
+      : new Date(selectedDate + "T09:00:00").toISOString();
+    const endTime = appointmentType === "VIDEO_CALL"
+      ? selectedTimeSlot?.endTime
+      : new Date(selectedDate + "T17:00:00").toISOString();
 
     try {
       setLoading(true);
@@ -326,11 +386,12 @@ export default function PatientBookingForm() {
           hospitalId: selectedHospital.id,
           doctorId: selectedDoctor.id === "video-doc" ? null : selectedDoctor.id,
           serviceId: selectedService.id,
-          timeSlotId: selectedTimeSlot.id,
-          startTime: selectedTimeSlot.startTime,
-          endTime: selectedTimeSlot.endTime,
+          timeSlotId: selectedTimeSlot?.id || null,
+          startTime,
+          endTime,
           type: appointmentType,
           notes,
+          date: selectedDate,
         }),
       });
       const data = await res.json();
@@ -358,6 +419,7 @@ export default function PatientBookingForm() {
               }),
             });
             if (!verifyRes.ok) throw new Error("Payment verification failed.");
+            setConfirmedAppointmentId(appointment.id);
             setStep(5);
           } catch (err: any) {
             setError(err.message);
@@ -462,41 +524,44 @@ export default function PatientBookingForm() {
                 </Button>
               ))}
             </div>
-            <div className="space-y-2">
-              <label className="font-semibold">Doctors</label>
-              {appointmentType === "VIDEO_CALL" && (
+            <div className="space-y-4">
+              <label className="font-semibold flex items-center gap-2">
+                <Stethoscope className="h-4 w-4 text-primary" /> Select Doctor
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* General Option */}
                 <Button
-                  variant={
-                    selectedDoctor?.id === "video-doc" ? "secondary" : "outline"
-                  }
+                  variant={selectedDoctor?.id === "video-doc" || selectedDoctor?.id === "general" ? "secondary" : "outline"}
                   onClick={() =>
                     setSelectedDoctor({
                       id: "video-doc",
-                      name: "General Video Call",
-                      specialty: "Online Doctor",
+                      name: "General Consultation",
+                      specialty: "Online/Walk-in",
                       createdAt: new Date().toISOString(),
                     })
                   }
+                  className="h-auto py-3 px-4 justify-start text-left flex flex-col items-start gap-1"
                 >
-                  <Video className="h-4 w-4 mr-2" /> General Video Call
+                  <div className="font-bold flex items-center gap-2 w-full">
+                    <Video className="h-4 w-4 text-primary" /> General
+                  </div>
+                  <span className="text-xs opacity-70 italic">No specific doctor</span>
                 </Button>
-              )}
-              {appointmentType === "IN_PERSON" &&
-                doctors.map((d) => (
+
+                {/* Doctor List */}
+                {doctors.map((d) => (
                   <Button
                     key={d.id}
-                    variant={
-                      selectedDoctor?.id === d.id ? "secondary" : "outline"
-                    }
+                    variant={selectedDoctor?.id === d.id ? "secondary" : "outline"}
                     onClick={() => setSelectedDoctor(d)}
-                    className="w-full justify-between"
+                    className="h-auto py-3 px-4 justify-start text-left flex flex-col items-start gap-1"
                   >
-                    <span>{d.name}</span>
-                    <span className="text-muted-foreground">
-                      {d.specialty}
-                    </span>
+                    <div className="font-bold">{d.name}</div>
+                    <span className="text-xs opacity-70">{d.specialty}</span>
                   </Button>
                 ))}
+              </div>
             </div>
             <div className="flex gap-4">
               <Button onClick={prevStep} variant="outline">
@@ -537,24 +602,54 @@ export default function PatientBookingForm() {
               <p className="text-sm text-muted-foreground">
                 Doctor: {selectedDoctor?.name}
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {timeSlots.length > 0 ? (
-                  timeSlots.map((slot) => (
-                    <Button
-                      key={slot.id}
-                      variant={
-                        selectedTimeSlot?.id === slot.id ? "default" : "outline"
-                      }
-                      onClick={() => setSelectedTimeSlot(slot)}
-                    >
-                      {formatTime(slot.startTime)}
-                    </Button>
-                  ))
-                ) : (
-                  <p className="col-span-3 text-center text-muted-foreground">
-                    No slots available.
-                  </p>
-                )}
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-4 text-xs mb-2">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-sm bg-primary" /> Selected
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-sm border border-input" /> Available
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-sm bg-muted opacity-50" /> Booked
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                  {timeSlots.length > 0 ? (
+                    timeSlots.map((slot) => {
+                      const isBooked = (slot as any).isBooked;
+                      return (
+                        <Button
+                          key={slot.id}
+                          disabled={isBooked}
+                          variant={
+                            selectedTimeSlot?.id === slot.id ? "default" : isBooked ? "outline" : "outline"
+                          }
+                          className={`h-12 text-xs font-medium rounded-xl transition-all relative ${isBooked
+                            ? "bg-muted text-muted-foreground border-muted opacity-60 cursor-not-allowed overflow-hidden"
+                            : selectedTimeSlot?.id === slot.id
+                              ? "ring-2 ring-primary ring-offset-2"
+                              : "hover:border-primary hover:text-primary hover:bg-primary/5"
+                            }`}
+                          onClick={() => !isBooked && setSelectedTimeSlot(slot)}
+                        >
+                          {formatTime(slot.startTime)}
+                          {isBooked && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-red-500/10 rotate-12">
+                              <span className="text-[8px] font-bold uppercase tracking-tighter text-red-600/50">Booked</span>
+                            </div>
+                          )}
+                        </Button>
+                      );
+                    })
+                  ) : (
+                    <div className="col-span-full py-8 text-center border-2 border-dashed rounded-2xl bg-muted/30">
+                      <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-20" />
+                      <p className="text-muted-foreground">No slots available for this date.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -587,16 +682,18 @@ export default function PatientBookingForm() {
               </div>
               <div className="flex justify-between">
                 <span>Doctor:</span>
-                <span>{selectedDoctor?.name}</span>
+                <span>{selectedDoctor?.id === 'video-doc' ? "General (Video)" : selectedDoctor?.name || "General"}</span>
               </div>
               <div className="flex justify-between">
                 <span>Date:</span>
                 <span>{formatDate(selectedDate)}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Time:</span>
-                <span>{formatTime(selectedTimeSlot?.startTime || "")}</span>
-              </div>
+              {appointmentType === "VIDEO_CALL" && (
+                <div className="flex justify-between">
+                  <span>Time:</span>
+                  <span>{formatTime(selectedTimeSlot?.startTime || "")}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Service:</span>
                 <span>{selectedService?.name}</span>
@@ -618,7 +715,7 @@ export default function PatientBookingForm() {
                 {loading ? "Processing..." : "Pay Now"}
               </Button>
             </div>
-          </div>
+          </div >
         );
 
       case 5:
@@ -630,11 +727,43 @@ export default function PatientBookingForm() {
               You’ll receive an email confirmation shortly from{" "}
               {selectedHospital?.name}.
             </p>
-            <Button onClick={() => window.location.reload()}>
-              Book Another
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mt-4">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-full border-primary text-primary hover:bg-primary/5"
+                onClick={() => generateReceipt({
+                  hospital: selectedHospital,
+                  doctor: selectedDoctor?.id === 'video-doc' ? null : selectedDoctor,
+                  service: selectedService,
+                  date: formatDate(selectedDate),
+                  time: appointmentType === "VIDEO_CALL" ? formatTime(selectedTimeSlot?.startTime || "") : "Managed by Hospital",
+                })}
+              >
+                Download Receipt
+              </Button>
+              {appointmentType === "VIDEO_CALL" ? (
+                <Button
+                  className="flex-1 rounded-full group"
+                  onClick={() => window.open(`/consultation/${confirmedAppointmentId}`, "_blank")}
+                >
+                  <Video className="h-4 w-4 mr-2 group-hover:animate-pulse" />
+                  Join Call
+                </Button>
+              ) : (
+                <Button className="flex-1 rounded-full" onClick={() => window.location.reload()}>
+                  Book Another
+                </Button>
+              )}
+            </div>
+            {appointmentType === "VIDEO_CALL" && (
+              <p className="text-xs text-muted-foreground mt-2">
+                The join link has also been sent to your email.
+              </p>
+            )}
           </div>
         );
+      default:
+        return null;
     }
   };
 
@@ -649,12 +778,12 @@ export default function PatientBookingForm() {
             {step === 1
               ? "(Select Hospital)"
               : step === 2
-              ? "(Select Doctor)"
-              : step === 3
-              ? "(Select Slot)"
-              : step === 4
-              ? "(Review & Pay)"
-              : "(Success)"}
+                ? "(Select Doctor)"
+                : step === 3
+                  ? "(Select Slot)"
+                  : step === 4
+                    ? "(Review & Pay)"
+                    : "(Success)"}
           </CardDescription>
         </CardHeader>
         <CardContent>{renderStep()}</CardContent>

@@ -119,7 +119,7 @@ model Appointment {
 id          String @id @default(cuid())
 
 patientId   String
-doctorId    String
+doctorId    String?
 hospitalId  String
 serviceId   String // Link to the specific service/procedure
 
@@ -139,7 +139,7 @@ createdAt DateTime @default(now())
 updatedAt DateTime @updatedAt
 
 patient    User     @relation("PatientAppointments", fields: [patientId], references: [id])
-doctor     Doctor   @relation("DoctorAppointments", fields: [doctorId], references: [id])
+doctor     Doctor?  @relation("DoctorAppointments", fields: [doctorId], references: [id])
 hospital   Hospital @relation("HospitalAppointments", fields: [hospitalId], references: [id])
 service    Service  @relation(fields: [serviceId], references: [id])
 }

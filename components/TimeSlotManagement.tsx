@@ -133,11 +133,14 @@ const TimeSlotManagement = () => {
     endTime: "10:00",
     doctorId: "general",
   });
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [duration, setDuration] = useState(30); // minutes
 
   // --------------------------------------------------------------------
   // Fetch Doctors and Slots
   // --------------------------------------------------------------------
   const fetchData = useCallback(async () => {
+    if (!hospitalId) return;
     setLoading(true);
     setError("");
     try {
@@ -175,58 +178,6 @@ const TimeSlotManagement = () => {
   }, [hospitalId, fetchData]);
 
   // --------------------------------------------------------------------
-  // Add Time Slot
-  // --------------------------------------------------------------------
-  const handleAddSlot = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError("");
-    setSuccess("");
-
-    const payload = {
-      date: newSlot.date,
-      startTime: newSlot.startTime,
-      endTime: newSlot.endTime,
-      doctorId: newSlot.doctorId === "general" ? null : newSlot.doctorId,
-    };
-
-    try {
-      const response = await fetch(SLOTS_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || "Failed to add slot.");
-      }
-
-      const addedSlot: TimeSlot = await response.json();
-      setSlots((prev) =>
-        [...prev, addedSlot].sort(
-          (a, b) =>
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-        )
-      );
-      setSuccess("Time slot added successfully!");
-
-      // Reset form
-      setNewSlot((prev) => ({
-        ...prev,
-        startTime: "09:00",
-        endTime: "10:00",
-      }));
-
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err: any) {
-      setError(err.message || "Error adding time slot.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // --------------------------------------------------------------------
   // Delete Time Slot
   // --------------------------------------------------------------------
   const handleDeleteSlot = async (slotId: string) => {
@@ -259,8 +210,92 @@ const TimeSlotManagement = () => {
   };
 
   // --------------------------------------------------------------------
-  // UI
+  // Add Time Slot (now supports bulk)
   // --------------------------------------------------------------------
+  const handleAddSlot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError("");
+    setSuccess("");
+
+    let slotsToCreate = [];
+
+    if (isBulkMode) {
+      // Calculate multiple slots
+      const [startH, startM] = newSlot.startTime.split(":").map(Number);
+      const [endH, endM] = newSlot.endTime.split(":").map(Number);
+
+      let current = new Date();
+      current.setHours(startH, startM, 0, 0);
+
+      const end = new Date();
+      end.setHours(endH, endM, 0, 0);
+
+      while (current.getTime() + duration * 60000 <= end.getTime()) {
+        const slotStart = current.toTimeString().slice(0, 5);
+        current = new Date(current.getTime() + duration * 60000);
+        const slotEnd = current.toTimeString().slice(0, 5);
+
+        slotsToCreate.push({
+          date: newSlot.date,
+          startTime: slotStart,
+          endTime: slotEnd,
+          doctorId: newSlot.doctorId === "general" ? null : newSlot.doctorId,
+        });
+      }
+    } else {
+      slotsToCreate.push({
+        date: newSlot.date,
+        startTime: newSlot.startTime,
+        endTime: newSlot.endTime,
+        doctorId: newSlot.doctorId === "general" ? null : newSlot.doctorId,
+      });
+    }
+
+    if (slotsToCreate.length === 0) {
+      setError("No slots to create in the given time range.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(SLOTS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(isBulkMode ? slotsToCreate : slotsToCreate[0]),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || "Failed to add slots.");
+      }
+
+      const addedData = await response.json();
+      const addedSlots: TimeSlot[] = Array.isArray(addedData) ? addedData : [addedData];
+
+      setSlots((prev) =>
+        [...prev, ...addedSlots].sort(
+          (a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        )
+      );
+      setSuccess(`${addedSlots.length} slot(s) added successfully!`);
+
+      // Reset form
+      setNewSlot((prev) => ({
+        ...prev,
+        startTime: "09:00",
+        endTime: "10:00",
+      }));
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message || "Error adding time slots.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ... (rest of the UI changes in the next chunk if needed)
   return (
     <div className="space-y-6">
       {success && (
@@ -268,21 +303,41 @@ const TimeSlotManagement = () => {
       )}
       {error && <NotificationBox type="error" title="Error" message={error} />}
 
-      {/* ----------------------- CREATE SLOT FORM ----------------------- */}
       <Card className="shadow-lg">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-primary">
-            <Clock className="h-5 w-5" />
-            Create New Time Slot
-          </CardTitle>
-          <CardDescription>
-            Define availability for in-person or video appointments
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <Clock className="h-5 w-5" />
+                Create Time Slots
+              </CardTitle>
+              <CardDescription>
+                Define availability for in-person or video appointments
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+              <Button
+                variant={!isBulkMode ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setIsBulkMode(false)}
+                className="rounded-md h-8 text-xs"
+              >
+                Single
+              </Button>
+              <Button
+                variant={isBulkMode ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setIsBulkMode(true)}
+                className="rounded-md h-8 text-xs"
+              >
+                Bulk
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAddSlot} className="space-y-4">
-            <div className="grid md:grid-cols-4 gap-4">
-              {/* Date */}
+            <div className="grid md:grid-cols-4 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2 text-foreground">
                   Date <span className="text-red-500">*</span>
@@ -299,7 +354,6 @@ const TimeSlotManagement = () => {
                 />
               </div>
 
-              {/* Doctor */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-foreground">
                   Assign To <span className="text-red-500">*</span>
@@ -320,10 +374,9 @@ const TimeSlotManagement = () => {
                 </select>
               </div>
 
-              {/* Start Time */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-foreground">
-                  Start Time <span className="text-red-500">*</span>
+                  {isBulkMode ? "Start Time Range" : "Start Time"} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="time"
@@ -336,10 +389,9 @@ const TimeSlotManagement = () => {
                 />
               </div>
 
-              {/* End Time */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-foreground">
-                  End Time <span className="text-red-500">*</span>
+                  {isBulkMode ? "End Time Range" : "End Time"} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="time"
@@ -351,21 +403,41 @@ const TimeSlotManagement = () => {
                   className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
                 />
               </div>
+
+              {isBulkMode && (
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-foreground">
+                    Duration (Min) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={duration}
+                    onChange={(e) => setDuration(Number(e.target.value))}
+                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-colors"
+                  >
+                    <option value={15}>15 Minutes</option>
+                    <option value={20}>20 Minutes</option>
+                    <option value={30}>30 Minutes</option>
+                    <option value={45}>45 Minutes</option>
+                    <option value={60}>60 Minutes</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-full h-10"
+              className="w-full rounded-full h-12 text-md font-bold"
             >
               {isSubmitting ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Slot...
+                  Processing...
                 </>
               ) : (
                 <>
-                  <Plus className="mr-2 h-4 w-4" /> Create Slot
+                  <Plus className="mr-2 h-5 w-5" />
+                  {isBulkMode ? "Create Multiple Slots" : "Create Single Slot"}
                 </>
               )}
             </Button>
@@ -413,9 +485,8 @@ const TimeSlotManagement = () => {
                 >
                   <div className="flex items-center gap-4">
                     <div
-                      className={`p-2 rounded-full ${
-                        slot.doctorId ? "bg-primary/10" : "bg-green-500/10"
-                      }`}
+                      className={`p-2 rounded-full ${slot.doctorId ? "bg-primary/10" : "bg-green-500/10"
+                        }`}
                     >
                       {slot.doctorId ? (
                         <Stethoscope className="h-5 w-5 text-primary" />
@@ -437,9 +508,8 @@ const TimeSlotManagement = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`text-muted-foreground hover:text-destructive hover:bg-destructive/10 ${
-                      slot.isBooked ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                    className={`text-muted-foreground hover:text-destructive hover:bg-destructive/10 ${slot.isBooked ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     onClick={() =>
                       !slot.isBooked && handleDeleteSlot(slot.id)
                     }

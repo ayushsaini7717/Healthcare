@@ -17,7 +17,7 @@ interface Appointment {
   type: string;
   videoLink?: string;
   patient: { name: string; email: string };
-  doctor: { name: string; specialty: string };
+  doctor: { name: string; specialty: string } | null;
   service: { name: string; price: number };
 }
 
@@ -132,15 +132,16 @@ export default function AppointmentManagement() {
                     <div className="text-sm text-muted-foreground">
                       <p>
                         <Stethoscope className="inline h-4 w-4 mr-1" />{" "}
-                        {a.doctor.name} ({a.doctor.specialty})
+                        {a.doctor ? `${a.doctor.name} (${a.doctor.specialty})` : "General / Unassigned"}
                       </p>
                       <p>
                         <IndianRupee className="inline h-4 w-4 mr-1" />{" "}
                         {a.service.name} – {formatPrice(a.service.price)}
                       </p>
                       <p>
-                        🕒 {formatDateTime(a.startTime)} →{" "}
-                        {formatDateTime(a.endTime)}
+                        🕒 {a.type === "VIDEO_CALL"
+                          ? `${formatDateTime(a.startTime)} → ${formatDateTime(a.endTime)}`
+                          : `${new Date(a.startTime).toLocaleDateString("en-IN", { dateStyle: "medium" })} (Day Appointment)`}
                       </p>
                       <p>Type: {a.type}</p>
                       {a.videoLink && (

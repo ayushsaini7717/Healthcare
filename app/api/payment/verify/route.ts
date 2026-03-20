@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import prisma from "@/lib/prisma"; // Adjust this path
+import prisma from "@/lib/prisma";
+import { sendBookingConfirmation } from "@/lib/mail";
 
 export async function POST(request: Request) {
-  let validatedBody;
   const body = await request.json();
- 
 
   const {
     razorpay_order_id,
@@ -24,60 +23,83 @@ export async function POST(request: Request) {
   const isSignatureValid = expectedSignature === razorpay_signature;
 
   if (!isSignatureValid) {
-    // If signature is invalid, payment failed. We must roll back.
     try {
-      // Find the appointment and its time slot
       const appointment = await prisma.appointment.findUnique({
         where: { id: appointmentId },
-        include: { service: true },
       });
-      
+
       if (appointment) {
         await prisma.$transaction([
           prisma.appointment.update({
             where: { id: appointmentId },
-            data: { 
-                paymentStatus: "FAILED", 
-                status: "CANCELED" 
+            data: {
+              paymentStatus: "FAILED",
+              status: "CANCELED"
             },
           }),
-          // Free up the time slot
           prisma.timeSlot.updateMany({
             where: {
-                hospitalId: appointment.hospitalId,
-                doctorId: appointment.doctorId,
-                startTime: appointment.startTime,
+              hospitalId: appointment.hospitalId,
+              doctorId: appointment.doctorId,
+              startTime: appointment.startTime,
             },
             data: { isBooked: false },
           }),
         ]);
       }
     } catch (rollBackError) {
-        console.error("Rollback failed:", rollBackError);
+      console.error("Rollback failed:", rollBackError);
     }
     return NextResponse.json({ message: "Invalid payment signature" }, { status: 400 });
   }
 
-  // 2. Signature is valid. Update the Appointment.
+  // 2. Signature is valid. Update the Appointment and Send Email.
   try {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        service: true,
+      }
+    });
+
+    if (!appointment) {
+      return NextResponse.json({ message: "Appointment not found" }, { status: 404 });
+    }
+
+    let videoLink = appointment.videoLink;
+    if (appointment.type === "VIDEO_CALL" && !videoLink) {
+      videoLink = `${process.env.NEXT_PUBLIC_BASE_URL}/consultation/${appointment.id}`;
+    }
+
     const updatedAppointment = await prisma.appointment.update({
-      where: { id: appointmentId, razorpayOrderId: razorpay_order_id },
+      where: { id: appointmentId },
       data: {
         paymentStatus: "PAID",
         razorpayPaymentId: razorpay_payment_id,
         razorpaySignature: razorpay_signature,
-        // The appointment 'status' remains 'PENDING' for hospital to confirm
+        videoLink,
+        status: "CONFIRMED", // Auto-confirm after payment
       },
+      include: {
+        patient: { select: { name: true, email: true } },
+        hospital: { select: { name: true } },
+        doctor: { select: { name: true, specialty: true } },
+        service: true,
+      }
+    });
+
+    // Send confirmation email asynchronously
+    sendBookingConfirmation(updatedAppointment).catch(err => {
+      console.error("Failed to send confirmation email:", err);
     });
 
     return NextResponse.json({
-      message: "Payment verified successfully",
+      message: "Payment verified and appointment confirmed",
       appointment: updatedAppointment,
     }, { status: 200 });
 
   } catch (error) {
     console.error("Error verifying payment:", error);
-    // This could happen if the appointmentId is wrong
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }

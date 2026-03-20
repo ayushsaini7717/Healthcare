@@ -55,42 +55,47 @@ export async function POST(request: Request) {
   } = body;
 
   try {
-    const [service, timeSlot] = await Promise.all([
-      prisma.service.findUnique({ where: { id: serviceId } }),
-      prisma.timeSlot.findUnique({ where: { id: timeSlotId } }),
-    ]);
+    const service = await prisma.service.findUnique({ where: { id: serviceId } });
 
     if (!service) {
       return NextResponse.json({ message: "Service not found" }, { status: 404 });
     }
-    if (!timeSlot) {
-      return NextResponse.json({ message: "Time slot not found" }, { status: 404 });
-    }
-    if (timeSlot.isBooked) {
-      return NextResponse.json({ message: "This time slot is already booked" }, { status: 409 });
-    }
-    if (service.price <= 0) {
-      return NextResponse.json({ message: "Invalid service price" }, { status: 400 });
+
+    // 4. Handle Slot / Time logic
+    if (type === "VIDEO_CALL") {
+      if (!timeSlotId) {
+        return NextResponse.json({ message: "Time slot is required for video calls" }, { status: 400 });
+      }
+      const timeSlot = await prisma.timeSlot.findUnique({ where: { id: timeSlotId } });
+      if (!timeSlot) {
+        return NextResponse.json({ message: "Time slot not found" }, { status: 404 });
+      }
+      if (timeSlot.isBooked) {
+        return NextResponse.json({ message: "This time slot is already booked" }, { status: 409 });
+      }
     }
 
     const options = {
-      amount: service.price, 
+      amount: service.price,
       currency: "INR",
       receipt: `receipt_appointment_${Date.now()}`,
     };
-    
+
     const razorpayOrder = await razorpay.orders.create(options);
-    
+
     if (!razorpayOrder) {
-        throw new Error("Failed to create Razorpay order");
+      throw new Error("Failed to create Razorpay order");
     }
+
+    // Sanitize doctorId
+    const finalDoctorId = (doctorId === 'video-doc' || doctorId === 'general' || !doctorId) ? null : doctorId;
 
     const [newAppointment] = await prisma.$transaction([
       prisma.appointment.create({
         data: {
           patientId,
           hospitalId,
-          doctorId,
+          doctorId: finalDoctorId,
           serviceId,
           startTime: new Date(startTime),
           endTime: new Date(endTime),
@@ -101,10 +106,12 @@ export async function POST(request: Request) {
           razorpayOrderId: razorpayOrder.id,
         },
       }),
-      prisma.timeSlot.update({
-        where: { id: timeSlotId },
-        data: { isBooked: true },
-      }),
+      ...(type === "VIDEO_CALL" ? [
+        prisma.timeSlot.update({
+          where: { id: timeSlotId },
+          data: { isBooked: true },
+        })
+      ] : []),
     ]);
 
     return NextResponse.json({
