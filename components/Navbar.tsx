@@ -47,7 +47,7 @@ export const Navbar = () => {
             Contact
           </Link>
 
-        
+
 
           {/* Admin Dropdown */}
           <div className="relative">
@@ -108,6 +108,14 @@ export const Navbar = () => {
                   >
                     <User className="w-4 h-4 text-emerald-600" /> My Profile
                   </Link>
+                  {(session.user as any)?.role === "DOCTOR" && (
+                    <Link
+                      href="/doctor/workspace"
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700"
+                    >
+                      <Shield className="w-4 h-4 text-emerald-600" /> Doctor Workspace
+                    </Link>
+                  )}
                   <button
                     onClick={() => signOut()}
                     className="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700"
@@ -138,7 +146,7 @@ export const Navbar = () => {
           <Link href="#contact" className="block text-center text-gray-700 hover:text-emerald-600">
             Contact
           </Link>
-          
+
 
           {/* Mobile Auth Buttons */}
           {!session ? (
@@ -167,7 +175,7 @@ export const Navbar = () => {
               >
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
-              
+
             </div>
           )}
         </div>

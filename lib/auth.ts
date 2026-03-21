@@ -48,12 +48,13 @@ export const authOptions = {
           id: user.id,
           username: user.email,
           email: user.email,
+          role: user.role,
           hospitalId: user.hospitalId
         };
       },
     }),
   ],
-   session: {
+  session: {
     strategy: "jwt",
   },
 
@@ -64,7 +65,7 @@ export const authOptions = {
   pages: {
     signIn: "/login", // optional
   },
-   callbacks: {
+  callbacks: {
     async signIn({ user, account, profile }: any) {
       if (account.provider === "github" || account.provider === "google") {
         const existingUser = await prisma.user.findUnique({
@@ -76,23 +77,23 @@ export const authOptions = {
             data: {
               email: user.email!,
               name: user.name || profile?.login || "User",
-              password: "", 
+              password: "",
               role: "PATIENT",
               isEmailVerified: true,
             },
           });
           user.id = newUser.id;
           user.role = newUser.role;
-          user.hospitalId = newUser.hospitalId; 
+          user.hospitalId = newUser.hospitalId;
         } else {
           user.id = existingUser.id;
           user.role = existingUser.role;
-          user.hospitalId = existingUser.hospitalId; 
+          user.hospitalId = existingUser.hospitalId;
         }
       }
       return true;
     },
-    async jwt({ token, user }:any) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -100,21 +101,21 @@ export const authOptions = {
         token.hospitalId = user.hospitalId;
       } else if (token.email && !token.role) {
         const dbUser = await prisma.user.findUnique({
-            where: { email: token.email },
-            select: { role: true },
+          where: { email: token.email },
+          select: { role: true },
         });
         if (dbUser) {
-            token.role = dbUser.role;
+          token.role = dbUser.role;
         }
       }
       return token;
     },
-    
-    async session({ session, token }:any) {
+
+    async session({ session, token }: any) {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
-        session.user.role = token.role as 'PATIENT' | 'HOSPITAL_ADMIN' | 'SUPER_ADMIN'; 
+        session.user.role = token.role as 'PATIENT' | 'HOSPITAL_ADMIN' | 'HOSPITAL_STAFF' | 'DOCTOR' | 'SUPER_ADMIN';
         session.user.hospitalId = token.hospitalId as string | null;
       }
       return session;

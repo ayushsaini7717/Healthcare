@@ -8,7 +8,8 @@ import { authOptions } from '@/lib/auth';
 async function getAdminSession() {
   const session: any = await getServerSession(authOptions as any);
 
-  if (!session || !session.user || session.user.role !== Role.HOSPITAL_ADMIN || !session.user.hospitalId) {
+  if (!session || !session.user || !session.user.hospitalId ||
+    (session.user.role !== Role.HOSPITAL_ADMIN && session.user.role !== Role.HOSPITAL_STAFF)) {
     return null;
   }
   return session.user as { id: string; role: Role; hospitalId: string; };
