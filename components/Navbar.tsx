@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useState } from "react";
+import Link from "next/link"; // Keep Link for navigation
+import Image from "next/image"; // Add Image for optimized images
+import { useSession, signOut, signIn } from "next-auth/react";
 import {
-  Heart,
   Menu,
   X,
-  ChevronDown,
   User,
   LogOut,
   Shield,
   Building2,
+  ChevronDown, // Keep ChevronDown for dropdowns
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ProtectedLink from "./ProtectedLink"; // New import
 
 export const Navbar = () => {
   const { data: session } = useSession();
@@ -28,8 +29,8 @@ export const Navbar = () => {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex justify-center items-center gap-2">
-          <img height={100} width={100} src="/digital.png"></img>
-          <img height={50} width={50} src="/btkitlogo1.jpeg"></img>
+          <Image height={100} width={100} src="/digital.png" alt="Digital Logo"></Image>
+          <Image height={50} width={50} src="/btkitlogo1.jpeg" alt="BTKIT Logo"></Image>
           <span className="text-2xl font-bold text-gray-900 tracking-tight">
             Health<span className="text-emerald-600">Care+</span>
           </span>
@@ -43,35 +44,44 @@ export const Navbar = () => {
           {/* <Link href="#doctors" className="text-gray-600 hover:text-emerald-600 font-medium">
             Doctors
           </Link> */}
-          <Link href="#contact" className="text-gray-600 hover:text-emerald-600 font-medium">
+          <Link href="#contact" className="text-gray-700 hover:text-emerald-600 font-medium transition-colors">
             Contact
           </Link>
 
-
+          <ProtectedLink
+            href="/book-appointment"
+            requiredRoles={["PATIENT", "DOCTOR", "HOSPITAL_STAFF", "HOSPITAL_ADMIN", "SUPER_ADMIN"]}
+            className="text-gray-600 hover:text-emerald-600 font-medium"
+          >
+            Book Appointment
+          </ProtectedLink>
 
           {/* Admin Dropdown */}
           <div className="relative">
             <Button
               variant="outline"
-              className="rounded-full flex items-center gap-1"
+              className="rounded-full flex items-center gap-2"
               onClick={() => setShowAdminMenu(!showAdminMenu)}
             >
-              Admin <ChevronDown className="w-4 h-4" />
+              <Shield className="w-4 h-4" />
+              Admin
             </Button>
             {showAdminMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white shadow-md rounded-lg border">
-                <Link
+                <ProtectedLink
                   href="/HospitalAdminPanel"
+                  requiredRoles={["HOSPITAL_ADMIN", "HOSPITAL_STAFF"]}
                   className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700"
                 >
                   <Building2 className="w-4 h-4 text-emerald-600" /> Hospital Admin
-                </Link>
-                <Link
+                </ProtectedLink>
+                <ProtectedLink
                   href="/super-admin/dashboard"
+                  requiredRoles={["SUPER_ADMIN"]}
                   className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700"
                 >
                   <Shield className="w-4 h-4 text-emerald-600" /> Super Admin
-                </Link>
+                </ProtectedLink>
               </div>
             )}
           </div>

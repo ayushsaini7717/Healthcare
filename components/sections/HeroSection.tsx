@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Video, MessageCircle, Ambulance } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import ProtectedLink from "@/components/ProtectedLink";
 
 export default function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-white py-24">
       <div className="container mx-auto px-6 flex flex-col-reverse md:flex-row items-center justify-between gap-12">
-        
+
         {/* 🩺 Text Section */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -22,18 +23,18 @@ export default function HeroSection() {
           </h1>
 
           <p className="text-lg text-gray-600 mb-12 leading-relaxed">
-            Compassionate care powered by technology — book appointments, consult virtually, 
+            Compassionate care powered by technology — book appointments, consult virtually,
             and access medical assistance anytime, anywhere.
           </p>
 
           {/* 🎯 Main Action Buttons */}
           <div className="flex flex-wrap justify-center md:justify-start gap-4">
-            <Link href="/appointment-book">
+            <ProtectedLink href="/appointment-book" requireAuth={true}>
               <Button className="rounded-full text-lg px-8 py-6 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all">
                 <Calendar className="mr-2 h-5 w-5" />
                 Book Appointment
               </Button>
-            </Link>
+            </ProtectedLink>
 
             <Link href="/consultation">
               <Button
