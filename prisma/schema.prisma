@@ -80,6 +80,11 @@ city      String
 phone     String?
 status    HospitalStatus @default(PENDING_REVIEW)
 applicantEmail String?
+registrationNumber String @default("N/A")
+stateMedicalCouncil String @default("N/A")
+establishedYear Int @default(1900)
+emergencyServices Boolean @default(false)
+documentUrl String @default("N/A")
 createdAt DateTime @default(now())
 updatedAt DateTime @updatedAt
 

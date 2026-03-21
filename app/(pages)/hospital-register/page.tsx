@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, MapPin, Phone, AlertCircle, CheckCircle, Loader, Heart } from "lucide-react";
+import { Building2, MapPin, Phone, AlertCircle, CheckCircle, Loader, Heart, FileText, Shield, CalendarDays, Activity, Link2 } from "lucide-react";
 
 interface FormData {
   email: string;
@@ -11,6 +11,11 @@ interface FormData {
   address: string;
   phone: string;
   city: string;
+  registrationNumber: string;
+  stateMedicalCouncil: string;
+  establishedYear: string;
+  emergencyServices: boolean;
+  documentUrl: string;
 }
 
 interface SuccessResponse {
@@ -28,6 +33,11 @@ export default function HospitalRegistrationPage() {
     address: "",
     phone: "",
     city: "",
+    registrationNumber: "",
+    stateMedicalCouncil: "",
+    establishedYear: "",
+    emergencyServices: false,
+    documentUrl: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -45,10 +55,10 @@ export default function HospitalRegistrationPage() {
   }, [session]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
     setError(null);
   };
@@ -58,7 +68,7 @@ export default function HospitalRegistrationPage() {
     setError(null);
     setSuccess(false);
 
-    if (!formData.email || !formData.hospitalName || !formData.address || !formData.city) {
+    if (!formData.email || !formData.hospitalName || !formData.address || !formData.city || !formData.registrationNumber || !formData.stateMedicalCouncil || !formData.establishedYear || !formData.documentUrl) {
       setError("Please fill in all required fields (marked with *)");
       return;
     }
@@ -78,7 +88,7 @@ export default function HospitalRegistrationPage() {
 
       setSuccess(true);
       setSuccessData(data);
-      setFormData({ email: session?.user?.email || "", hospitalName: "", address: "", phone: "", city: "" });
+      setFormData({ email: session?.user?.email || "", hospitalName: "", address: "", phone: "", city: "", registrationNumber: "", stateMedicalCouncil: "", establishedYear: "", emergencyServices: false, documentUrl: "" });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       setError(errorMessage);
@@ -255,7 +265,96 @@ export default function HospitalRegistrationPage() {
                   />
                 </div>
 
-               <button
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-foreground">
+                    <span className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Registration Number<span className="text-destructive">*</span>
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    name="registrationNumber"
+                    value={formData.registrationNumber}
+                    onChange={handleChange}
+                    placeholder="E.g., REG-2023-XXXX"
+                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-foreground">
+                    <span className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-primary" />
+                      State Medical Council<span className="text-destructive">*</span>
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    name="stateMedicalCouncil"
+                    value={formData.stateMedicalCouncil}
+                    onChange={handleChange}
+                    placeholder="E.g., Delhi Medical Council"
+                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-foreground">
+                    <span className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-primary" />
+                      Established Year<span className="text-destructive">*</span>
+                    </span>
+                  </label>
+                  <input
+                    type="number"
+                    name="establishedYear"
+                    value={formData.establishedYear}
+                    onChange={handleChange}
+                    placeholder="YYYY"
+                    min="1800"
+                    max={new Date().getFullYear()}
+                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-foreground">
+                    <span className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-primary" />
+                      Document URL (Licenses)<span className="text-destructive">*</span>
+                    </span>
+                  </label>
+                  <input
+                    type="url"
+                    name="documentUrl"
+                    value={formData.documentUrl}
+                    onChange={handleChange}
+                    placeholder="Provide a Google Drive/Dropbox valid link"
+                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 bg-muted/50 p-4 rounded-lg border border-border">
+                  <input
+                    type="checkbox"
+                    name="emergencyServices"
+                    id="emergencyServices"
+                    checked={formData.emergencyServices}
+                    onChange={handleChange}
+                    className="h-5 w-5 rounded border-input bg-background text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="emergencyServices" className="text-sm font-semibold text-foreground flex items-center gap-2 cursor-pointer select-none">
+                    <Activity className="h-4 w-4 text-primary" />
+                    24/7 Emergency Services Available
+                  </label>
+                </div>
+
+                <button
                   type="submit"
                   disabled={isLoading}
                   className="w-full bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground font-semibold py-6 px-8 rounded-full transition flex items-center justify-center gap-2"

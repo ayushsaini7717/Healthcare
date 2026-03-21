@@ -6,12 +6,12 @@ import { HospitalStatus } from "@prisma/client";
 export async function POST(request: Request) {
     const body = await request.json();
 
-    const { email, hospitalName, address, phone, city } = body;
-    
-    if (!email || !hospitalName || !address || !city) {
-        return NextResponse.json({ msg: "Missing required fields: email, hospital name, address, or city." }, { status: 400 });
+    const { email, hospitalName, address, phone, city, registrationNumber, stateMedicalCouncil, establishedYear, emergencyServices, documentUrl } = body;
+
+    if (!email || !hospitalName || !address || !city || !registrationNumber || !stateMedicalCouncil || !establishedYear || !documentUrl) {
+        return NextResponse.json({ msg: "Missing required verification fields." }, { status: 400 });
     }
-    
+
     try {
         const user = await prisma.user.findFirst({
             where: {
@@ -28,13 +28,18 @@ export async function POST(request: Request) {
                 name: hospitalName,
                 address: address,
                 city: city,
-                phone: phone, 
+                phone: phone,
                 status: HospitalStatus.PENDING_REVIEW,
                 applicantEmail: email,
+                registrationNumber: registrationNumber,
+                stateMedicalCouncil: stateMedicalCouncil,
+                establishedYear: parseInt(establishedYear),
+                emergencyServices: Boolean(emergencyServices),
+                documentUrl: documentUrl
             }
         });
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             msg: "Hospital application submitted successfully.",
             hospitalId: hospital.id,
             details: "Access is pending Super Admin approval. You will be notified when your status changes."

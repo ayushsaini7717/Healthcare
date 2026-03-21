@@ -21,6 +21,10 @@ import {
   Calendar,
   Loader,
   Truck,
+  FileText,
+  Shield,
+  Activity,
+  Link2,
 } from "lucide-react";
 
 type Hospital = {
@@ -30,6 +34,11 @@ type Hospital = {
   city: string;
   phone?: string;
   applicantEmail?: string;
+  registrationNumber: string;
+  stateMedicalCouncil: string;
+  establishedYear: number;
+  emergencyServices: boolean;
+  documentUrl: string;
   createdAt: string;
 };
 
@@ -257,6 +266,36 @@ export default function SuperAdminDashboard() {
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">Submitted</p>
                             <p>{new Date(h.createdAt).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <FileText className="h-5 w-5 text-emerald-600" />
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Registration No.</p>
+                            <p className="font-semibold">{h.registrationNumber}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <Shield className="h-5 w-5 text-emerald-600" />
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Council & Year</p>
+                            <p>{h.stateMedicalCouncil} (Est. {h.establishedYear})</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 md:col-span-2 bg-emerald-50 dark:bg-emerald-950/20 p-4 rounded-lg border border-emerald-100 dark:border-emerald-900">
+                          <Activity className="h-5 w-5 text-emerald-600" />
+                          <div>
+                            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-400">Emergency Services</p>
+                            <p className="text-emerald-900 dark:text-emerald-300 font-semibold">{h.emergencyServices ? "Available 24/7" : "Not Currently Available"}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 md:col-span-2 bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900 mb-2">
+                          <Link2 className="h-5 w-5 text-blue-600" />
+                          <div className="w-full overflow-hidden">
+                            <p className="text-sm font-medium text-blue-800 dark:text-blue-400">Verification Documents</p>
+                            <a href={h.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline break-all font-medium inline-block mt-1">
+                              View Attached Documents ↗
+                            </a>
                           </div>
                         </div>
                       </div>
