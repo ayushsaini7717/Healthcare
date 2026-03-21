@@ -11,7 +11,9 @@ datasource db {
 
 enum Role {
 PATIENT
-HOSPITAL_ADMIN 
+HOSPITAL_ADMIN
+HOSPITAL_STAFF
+DOCTOR
 SUPER_ADMIN  
 }
 
@@ -57,6 +59,7 @@ doctor            Doctor?   @relation("UserDoctor")
 
 otp               OTP?
 appointments      Appointment[] @relation("PatientAppointments")
+prescriptions     Prescription[] @relation("PatientPrescriptions")
 }
 
 model OTP {
@@ -102,6 +105,7 @@ hospital  Hospital @relation("HospitalDoctors", fields: [hospitalId], references
 
 appointments Appointment[] @relation("DoctorAppointments")
 timeSlots TimeSlot[] @relation("DoctorTimeSlots")
+prescriptions Prescription[] @relation("DoctorPrescriptions")
 }
 
 model Service {
@@ -131,6 +135,9 @@ notes       String?
 paymentStatus String @default("PENDING")
 videoLink   String? // Populated if type is VIDEO_CALL and confirmed
 
+actualStartTime   DateTime?
+actualEndTime     DateTime?
+
 razorpayOrderId   String? @unique // Razorpay Order ID
 razorpayPaymentId String? // Razorpay Payment ID
 razorpaySignature String? // Razorpay Signature
@@ -138,10 +145,27 @@ razorpaySignature String? // Razorpay Signature
 createdAt DateTime @default(now())
 updatedAt DateTime @updatedAt
 
+prescription Prescription?
+
 patient    User     @relation("PatientAppointments", fields: [patientId], references: [id])
 doctor     Doctor?  @relation("DoctorAppointments", fields: [doctorId], references: [id])
 hospital   Hospital @relation("HospitalAppointments", fields: [hospitalId], references: [id])
 service    Service  @relation(fields: [serviceId], references: [id])
+}
+
+model Prescription {
+id            String   @id @default(cuid())
+appointmentId String   @unique
+patientId     String
+doctorId      String
+medications   Json     // Storing array of medications
+notes         String?
+createdAt     DateTime @default(now())
+updatedAt     DateTime @updatedAt
+
+appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+patient       User        @relation("PatientPrescriptions", fields: [patientId], references: [id])
+doctor        Doctor      @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
 }
 
 model TimeSlot {

@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import SessionProviders from '@/providers/SessionProvider'
+import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: 'Healthcare AI',
@@ -22,6 +23,7 @@ export default function RootLayout({
         <SessionProviders>
           {children}
         </SessionProviders>
+        <Toaster position="top-center" richColors />
         <Analytics />
       </body>
     </html>

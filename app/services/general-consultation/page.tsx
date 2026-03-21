@@ -1,10 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import { AppointmentBooking } from "@/components/appointment-booking";
 
 export default function GeneralConsultationPage() {
+  const { data: session } = useSession() as any;
   const [showBooking, setShowBooking] = useState(false);
+
+  const handleBookClick = () => {
+    if (!session) {
+      toast.error("Please sign in to book an appointment.");
+      return;
+    }
+    setShowBooking(true);
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
@@ -25,8 +36,8 @@ export default function GeneralConsultationPage() {
       <p className="text-lg font-semibold mb-4">Fee: ₹500 | Duration: 30 min</p>
 
       <button
-        onClick={() => setShowBooking(true)}
-        className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+        onClick={handleBookClick}
+        className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 border border-green-600"
       >
         Book Appointment
       </button>

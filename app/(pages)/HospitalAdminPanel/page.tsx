@@ -2,25 +2,36 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Calendar, Clock, IndianRupee, Stethoscope, TrendingUp } from "lucide-react";
+import { Calendar, Clock, IndianRupee, Stethoscope, TrendingUp, User } from "lucide-react";
 import DoctorManagement from "@/components/DoctorManagement";
 import TimeSlotManagement from "@/components/TimeSlotManagement";
 import AppointmentManagement from "@/components/AppointmentManagement";
 import ServiceManagement from "@/components/ServiceManagement";
-import BrainTumorPrediction from "@/components/BrainTumorPrediction";
+import StaffManagement from "@/components/StaffManagement";
 
-
-const tabs = [
-  { id: "appointments", label: "Appointments", icon: Calendar, component: AppointmentManagement },
-  { id: "doctors", label: "Doctors", icon: Stethoscope, component: DoctorManagement },
-  { id: "slots", label: "Time Slots", icon: Clock, component: TimeSlotManagement },
-  { id: "services", label: "Services & Pricing", icon: IndianRupee, component: ServiceManagement },
-  { id: "tumor-prediction", label: "Brain Tumor Prediction", icon: TrendingUp, component: BrainTumorPrediction },
+const allTabs = [
+  { id: "staff", label: "Staff Management", icon: User, component: StaffManagement, roles: ["HOSPITAL_ADMIN"] },
+  { id: "appointments", label: "Appointments", icon: Calendar, component: AppointmentManagement, roles: ["HOSPITAL_ADMIN", "HOSPITAL_STAFF"] },
+  { id: "doctors", label: "Doctors", icon: Stethoscope, component: DoctorManagement, roles: ["HOSPITAL_ADMIN"] },
+  { id: "slots", label: "Time Slots", icon: Clock, component: TimeSlotManagement, roles: ["HOSPITAL_ADMIN", "HOSPITAL_STAFF"] },
+  { id: "services", label: "Services & Pricing", icon: IndianRupee, component: ServiceManagement, roles: ["HOSPITAL_ADMIN"] },
 ];
 
 export default function AdminDashboard() {
-  const { data: session } = useSession() as any;
-  const [activeTab, setActiveTab] = useState("appointments");
+  const { data: session, status } = useSession() as any;
+  const userRole = session?.user?.role;
+
+  // Filter tabs based on user role
+  const tabs = allTabs.filter(tab => tab.roles.includes(userRole));
+
+  // Default to first available tab
+  const defaultTab = tabs.length > 0 ? tabs[0].id : "";
+  const [activeTab, setActiveTab] = useState("");
+
+  // Set default tab when tabs load or role changes
+  if (activeTab === "" && defaultTab !== "") {
+    setActiveTab(defaultTab);
+  }
 
   const activeTabData = tabs.find((t) => t.id === activeTab);
   const Component = activeTabData?.component;
@@ -39,11 +50,10 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? "bg-green-600 text-white shadow-lg shadow-blue-500/30"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${activeTab === tab.id
+                  ? "bg-green-600 text-white shadow-lg shadow-blue-500/30"
+                  : "text-slate-600 hover:bg-slate-100"
+                  }`}
               >
                 <Icon className="h-5 w-5" />
                 <span className="font-medium">{tab.label}</span>
