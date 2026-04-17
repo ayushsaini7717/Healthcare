@@ -40,6 +40,14 @@ enum AmbulanceStatus {
   REJECTED
 }
 
+enum OrderStatus {
+  PENDING      
+  PAID   
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
 
 model User {
 id                String    @id @default(cuid())
@@ -60,6 +68,7 @@ doctor            Doctor?   @relation("UserDoctor")
 otp               OTP?
 appointments      Appointment[] @relation("PatientAppointments")
 prescriptions     Prescription[] @relation("PatientPrescriptions")
+orders            MedicineOrder[] @relation("PatientOrders")
 }
 
 model OTP {
@@ -171,6 +180,7 @@ updatedAt     DateTime @updatedAt
 appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 patient       User        @relation("PatientPrescriptions", fields: [patientId], references: [id])
 doctor        Doctor      @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+order         MedicineOrder? @relation("PrescriptionOrder")
 }
 
 model TimeSlot {
@@ -201,4 +211,49 @@ createdAt DateTime @default(now())
 updatedAt DateTime @updatedAt
 
 hospital Hospital? @relation(fields: [hospitalId], references: [id])
+}
+
+model MedicineOrder {
+  id          String @id @default(cuid())
+  patientId   String
+  prescriptionId String? @unique
+  pharmacyId  String?
+
+  status      OrderStatus @default(PENDING)
+  totalAmount Float
+  deliveryAddress String
+
+  razorpayOrderId   String? @unique
+  razorpayPaymentId String? 
+  razorpaySignature String? 
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient      User     @relation("PatientOrders", fields: [patientId], references: [id])
+  prescription Prescription? @relation("PrescriptionOrder", fields: [prescriptionId], references: [id])
+  pharmacy     PartnerPharmacy? @relation("PharmacyOrders", fields: [pharmacyId], references: [id])
+  items        OrderItem[]
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  medicineName String
+  quantity  Int
+  price     Float
+
+  order     MedicineOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model PartnerPharmacy {
+  id        String @id @default(cuid())
+  name      String
+  location  String
+  contactInfo String
+  isVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    MedicineOrder[] @relation("PharmacyOrders")
 }
