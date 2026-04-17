@@ -42,6 +42,7 @@ enum AmbulanceStatus {
 
 enum OrderStatus {
   PENDING      
+  PENDING_VERIFICATION
   PAID   
   PROCESSING
   SHIPPED
@@ -222,10 +223,16 @@ model MedicineOrder {
   status      OrderStatus @default(PENDING)
   totalAmount Float
   deliveryAddress String
+  deliveryLat Float?
+  deliveryLng Float?
+
+  prescriptionUrl String? // For uploaded images/pdfs
 
   razorpayOrderId   String? @unique
   razorpayPaymentId String? 
   razorpaySignature String? 
+
+  deliveryAgentId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -233,6 +240,7 @@ model MedicineOrder {
   patient      User     @relation("PatientOrders", fields: [patientId], references: [id])
   prescription Prescription? @relation("PrescriptionOrder", fields: [prescriptionId], references: [id])
   pharmacy     PartnerPharmacy? @relation("PharmacyOrders", fields: [pharmacyId], references: [id])
+  deliveryAgent DeliveryAgent? @relation("AgentOrders", fields: [deliveryAgentId], references: [id])
   items        OrderItem[]
 }
 
@@ -250,10 +258,55 @@ model PartnerPharmacy {
   id        String @id @default(cuid())
   name      String
   location  String
+  lat       Float?
+  lng       Float?
   contactInfo String
   isVerified Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   orders    MedicineOrder[] @relation("PharmacyOrders")
+  inventory PharmacyInventory[]
+}
+
+model Medicine {
+  id String @id @default(cuid())
+  name String
+  saltComposition String?
+  manufacturer String
+  category String
+  prescriptionRequired Boolean @default(false)
+  mrp Float
+  discountPrice Float?
+  imageUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  inventory PharmacyInventory[]
+}
+
+model PharmacyInventory {
+  id String @id @default(cuid())
+  pharmacyId String
+  medicineId String
+  stock Int @default(0)
+  
+  pharmacy PartnerPharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  medicine Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+
+  @@unique([pharmacyId, medicineId])
+}
+
+model DeliveryAgent {
+  id String @id @default(cuid())
+  name String
+  phone String
+  vehicleNumber String
+  isAvailable Boolean @default(true)
+  currentLat Float?
+  currentLng Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders MedicineOrder[] @relation("AgentOrders")
 }
