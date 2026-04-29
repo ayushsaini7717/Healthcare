@@ -202,3 +202,37 @@ updatedAt DateTime @updatedAt
 
 hospital Hospital? @relation(fields: [hospitalId], references: [id])
 }
+
+model ChatSession {
+  id        String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userEmail String
+  userName  String?
+  language  String?       @default("en")
+  startedAt DateTime?     @default(now()) @db.Timestamp(6)
+  messages  ChatMessage[]
+  report    ChatReport?
+}
+
+model ChatMessage {
+  id        String      @id @default(dbgenerated("(gen_random_uuid())::text"))
+  sessionId String
+  sender    String
+  message   String
+  createdAt DateTime?   @default(now()) @db.Timestamp(6)
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model ChatReport {
+  id               String      @id @default(dbgenerated("(gen_random_uuid())::text"))
+  sessionId        String      @unique
+  userEmail        String
+  userName         String?
+  symptoms         String[]
+  possibleDiseases String[]
+  aiAssessment     String?
+  language         String?
+  isEmergency      Boolean?    @default(false)
+  createdAt        DateTime?   @default(now()) @db.Timestamp(6)
+  session          ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
