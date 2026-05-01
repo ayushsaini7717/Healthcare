@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import BookingProgress from "@/components/appointments/BookingProgress";
 import {
   ArrowLeft,
   CreditCard,
@@ -172,22 +173,38 @@ export default function CheckoutPage() {
   });
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-5xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/20">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
 
-      <div className="mb-10">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4 -ml-2 hover:bg-primary/10 hover:text-primary transition-all"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Slots
-        </Button>
-        <h1 className="text-4xl font-extrabold tracking-tight text-primary">Finalize Booking</h1>
-        <p className="text-muted-foreground text-lg mt-2">
-          Review details and complete your payment securely.
-        </p>
+      {/* Page Header */}
+      <div className="bg-white border-b border-slate-200/80 shadow-sm">
+        <div className="container mx-auto px-4 max-w-5xl py-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="-ml-2 mb-3 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Slots
+          </Button>
+          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold mb-2 border border-emerald-200">
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Step 4 of 4 — Confirm & Pay
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+            Finalize <span className="text-emerald-600">Booking</span>
+          </h1>
+          <p className="text-slate-500 text-base mt-1">
+            Review your appointment details and complete payment securely.
+          </p>
+        </div>
       </div>
+
+      {/* Progress Bar */}
+      <BookingProgress currentStep={3} />
+
+      {/* Main Content */}
+      <div className="container mx-auto py-10 px-4 max-w-5xl">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Left: Steps */}
@@ -337,6 +354,7 @@ export default function CheckoutPage() {
             </CardFooter>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );

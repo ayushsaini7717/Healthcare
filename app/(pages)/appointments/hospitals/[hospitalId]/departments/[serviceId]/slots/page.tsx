@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar as CalendarIcon, User, ChevronRight, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import SlotGrid from "@/components/appointments/SlotGrid";
+import BookingProgress from "@/components/appointments/BookingProgress";
 import { Badge } from "@/components/ui/badge";
 
 interface Doctor {
@@ -71,29 +72,46 @@ export default function SlotsPage({ params }: { params: { hospitalId: string; se
   };
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-6xl">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/20">
+
+      {/* Page Header */}
+      <div className="bg-white border-b border-slate-200/80 shadow-sm">
+        <div className="container mx-auto px-4 max-w-7xl py-6">
           <Link href={`/appointments/hospitals/${params.hospitalId}/departments`}>
-            <Button variant="ghost" className="mb-4 -ml-2 hover:bg-primary/10 hover:text-primary">
+            <Button variant="ghost" size="sm" className="-ml-2 mb-3 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all">
               <ArrowLeft className="h-4 w-4 mr-2" /> Back to Departments
             </Button>
           </Link>
-          <h1 className="text-4xl font-extrabold tracking-tight text-primary">Choose your Slot</h1>
-          <p className="text-muted-foreground text-lg mt-1">Select a convenient time for your visit.</p>
-        </div>
-        
-        <div className="flex items-center gap-3 bg-card p-2 rounded-2xl border shadow-sm">
-          <CalendarIcon className="h-5 w-5 text-primary ml-2" />
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            min={new Date().toISOString().split("T")[0]}
-            className="bg-transparent border-none focus:ring-0 font-bold text-sm outline-none cursor-pointer pr-4"
-          />
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold mb-2 border border-emerald-200">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Step 3 of 4 — Choose Time Slot
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+                Pick Your <span className="text-emerald-600">Time Slot</span>
+              </h1>
+              <p className="text-slate-500 text-base mt-1">Select a convenient time for your appointment.</p>
+            </div>
+            <div className="flex items-center gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
+              <CalendarIcon className="h-5 w-5 text-emerald-600 ml-1" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="bg-transparent border-none focus:ring-0 font-bold text-sm outline-none cursor-pointer pr-3"
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Progress Bar */}
+      <BookingProgress currentStep={2} />
+
+      {/* Main Content */}
+      <div className="container mx-auto py-10 px-4 max-w-6xl">
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left Sidebar: Doctor Selection */}
@@ -210,6 +228,7 @@ export default function SlotsPage({ params }: { params: { hospitalId: string; se
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
