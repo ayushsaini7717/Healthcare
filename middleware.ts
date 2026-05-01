@@ -7,6 +7,12 @@ export default withAuth(
     const { token } = req.nextauth;
     const { pathname } = req.nextUrl;
 
+    if (pathname.startsWith("/appointments") || pathname.startsWith("/api/appointments")) {
+      if (!token || token.role !== "PATIENT") {
+        return NextResponse.redirect(new URL("/unauthorized", req.url));
+      }
+    }
+
     if (pathname.startsWith("/hospital-admin") || pathname.startsWith("/api/hospital-admin")) {
       if (!token || token.role !== "HOSPITAL_ADMIN" || !token.hospitalId) {
         return NextResponse.redirect(new URL("/unauthorized", req.url));
@@ -37,6 +43,8 @@ export const config = {
     "/hospital-admin/:path*", 
     "/admin/:path*", 
     "/api/hospital-admin/:path*",  
-    "/super-admin/:path*"
+    "/super-admin/:path*",
+    "/appointments/:path*",
+    "/api/appointments/:path*"
   ],
 };

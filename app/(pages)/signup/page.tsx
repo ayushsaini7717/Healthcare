@@ -16,7 +16,7 @@ export default function SignupPage() {
     if (!email) return alert("Please enter your email");
 
     setLoading(true);
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASEURL}/api/auth/otp`, {
+    const res = await fetch(`/api/auth/otp`, {
       method: "POST",
       body: JSON.stringify({ email }),
     });
@@ -45,7 +45,7 @@ export default function SignupPage() {
 
   const handleCreateAccount = async () => {
     if (!password) return alert("Enter your password");
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASEURL}/api/auth/verify-otp`, {
+    const res = await fetch(`/api/auth/verify-otp`, {
       method: "POST",
       body: JSON.stringify({ email, password, type: "accountCreation" }),
     });

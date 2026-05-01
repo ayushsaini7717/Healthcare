@@ -1,103 +1,208 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Calendar, Video, MessageCircle, Ambulance } from "lucide-react";
+import { Calendar, Video, MessageCircle, Ambulance, ArrowRight, ChevronRight, Shield, Star } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import ProtectedLink from "@/components/ProtectedLink";
 
+const QUICK_ACTIONS = [
+  {
+    icon: <Calendar className="h-6 w-6" />,
+    label: "Book OPD",
+    desc: "Schedule a visit",
+    href: "/appointments/hospitals",
+    color: "from-emerald-500 to-teal-500",
+    bg: "bg-emerald-50",
+    textColor: "text-emerald-700",
+    protected: true,
+  },
+  {
+    icon: <Video className="h-6 w-6" />,
+    label: "Video Consult",
+    desc: "Talk to a doctor",
+    href: "/consultation",
+    color: "from-blue-500 to-indigo-500",
+    bg: "bg-blue-50",
+    textColor: "text-blue-700",
+    protected: false,
+  },
+  {
+    icon: <Ambulance className="h-6 w-6" />,
+    label: "Ambulance",
+    desc: "Emergency response",
+    href: "/ambulances",
+    color: "from-rose-500 to-red-500",
+    bg: "bg-rose-50",
+    textColor: "text-rose-700",
+    protected: false,
+  },
+  {
+    icon: <MessageCircle className="h-6 w-6" />,
+    label: "AI Assistant",
+    desc: "Symptom checker",
+    href: "https://medical-chatbot4-1.onrender.com/",
+    color: "from-violet-500 to-purple-500",
+    bg: "bg-violet-50",
+    textColor: "text-violet-700",
+    protected: false,
+  },
+];
+
+const TRUST_BADGES = [
+  { label: "Verified Hospitals", value: "10+" },
+  { label: "Specialist Doctors", value: "25+" },
+  { label: "Happy Patients", value: "5000+" },
+  { label: "Districts Covered", value: "8+" },
+];
+
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-white py-24">
-      <div className="container mx-auto px-6 flex flex-col-reverse md:flex-row items-center justify-between gap-12">
+    <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-emerald-50/40 to-teal-50/30 pt-10 pb-20">
+      {/* Background decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-100/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        {/* Grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: "radial-gradient(circle, #10b981 1px, transparent 1px)",
+            backgroundSize: "30px 30px",
+          }}
+        />
+      </div>
 
-        {/* 🩺 Text Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-2xl text-center md:text-left"
-        >
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
-            Your <span className="text-emerald-600">Health</span>, Our Priority
-          </h1>
+      <div className="container mx-auto px-4 max-w-7xl relative">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
-          <p className="text-lg text-gray-600 mb-12 leading-relaxed">
-            Compassionate care powered by technology — book appointments, consult virtually,
-            and access medical assistance anytime, anywhere.
-          </p>
+          {/* ── Left: Content ── */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7 }}
+          >
+            {/* Tag */}
+            <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-6">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Uttarakhand's Digital Health Platform
+            </div>
 
-          {/* 🎯 Main Action Buttons */}
-          <div className="flex flex-wrap justify-center md:justify-start gap-4">
-            <ProtectedLink href="/appointment-book" requireAuth={true}>
-              <Button className="rounded-full text-lg px-8 py-6 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all">
-                <Calendar className="mr-2 h-5 w-5" />
-                Book Appointment
-              </Button>
-            </ProtectedLink>
+            <h1 className="text-5xl md:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight mb-6">
+              Quality Care,{" "}
+              <span className="relative">
+                <span className="text-emerald-600">Zero Queues</span>
+                <svg className="absolute -bottom-2 left-0 w-full" height="8" viewBox="0 0 200 8" fill="none">
+                  <path d="M0 6 Q50 0 100 6 Q150 12 200 6" stroke="#10b981" strokeWidth="3" fill="none" strokeLinecap="round" />
+                </svg>
+              </span>
+            </h1>
 
-            <Link href="/consultation">
-              <Button
-                variant="outline"
-                className="rounded-full text-lg px-8 py-6 border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-all"
+            <p className="text-slate-600 text-xl leading-relaxed mb-10 max-w-lg">
+              Book OPD appointments at government hospitals across Uttarakhand. 
+              Skip the lines — consult verified specialists from the comfort of your home.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap gap-4 mb-12">
+              <ProtectedLink
+                href="/appointments/hospitals"
+                requiredRoles={["PATIENT", "DOCTOR", "HOSPITAL_STAFF", "HOSPITAL_ADMIN", "SUPER_ADMIN"]}
               >
-                <Video className="mr-2 h-5 w-5" />
-                Join Consultation
-              </Button>
-            </Link>
+                <Button className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-base font-bold shadow-lg shadow-emerald-200 hover:shadow-xl hover:shadow-emerald-200 transition-all group">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Book Appointment
+                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </ProtectedLink>
+              <Link href="/hospital-register">
+                <Button
+                  variant="outline"
+                  className="h-14 px-8 rounded-2xl border-2 border-slate-200 text-slate-700 text-base font-bold hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 transition-all"
+                >
+                  Register Hospital
+                </Button>
+              </Link>
+            </div>
 
-            <Link href="https://medical-chatbot4-1.onrender.com/">
-              <Button
-                variant="outline"
-                className="rounded-full text-lg px-8 py-6 border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all"
-              >
-                <MessageCircle className="mr-2 h-5 w-5" />
-                Chat Assistant
-              </Button>
-            </Link>
+            {/* Trust indicators */}
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {["D", "A", "P", "R"].map((l, i) => (
+                  <div
+                    key={i}
+                    className="h-9 w-9 rounded-full border-2 border-white flex items-center justify-center text-xs font-black text-white shadow-sm"
+                    style={{ background: ["#10b981","#3b82f6","#8b5cf6","#f59e0b"][i] }}
+                  >
+                    {l}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  {[1,2,3,4,5].map(i => <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-sm text-slate-500 font-medium">5000+ patients trust us</p>
+              </div>
+              <div className="ml-4 flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+                <Shield className="h-4 w-4 text-emerald-500" />
+                Govt. Verified
+              </div>
+            </div>
+          </motion.div>
 
-            <Link href="/ambulances">
-              <Button
-                variant="outline"
-                className="rounded-full text-lg px-8 py-6 border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-all"
-              >
-                <Ambulance className="mr-2 h-5 w-5" />
-                Find Ambulance
-              </Button>
-            </Link>
-            <Link href="/ambulances/register">
-              <Button
-                variant="outline"
-                className="rounded-full text-lg px-8 py-6 border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-all"
-              >
-                <Ambulance className="mr-2 h-5 w-5" />
-                Register ambulance
-              </Button>
-            </Link>
-            <Link href="/hospital-register">
-              <Button
-                variant="outline"
-                className="rounded-full text-lg px-8 py-6 border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-all"
-              >
-                Register hospital
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
+          {/* ── Right: Quick Action Cards ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="grid grid-cols-2 gap-4"
+          >
+            {QUICK_ACTIONS.map((action, i) => {
+              const card = (
+                <motion.div
+                  key={i}
+                  whileHover={{ scale: 1.04, y: -4 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  className="group bg-white rounded-3xl p-6 shadow-md hover:shadow-xl border border-slate-100 cursor-pointer transition-shadow"
+                >
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.color} flex items-center justify-center text-white mb-4 shadow-md group-hover:scale-110 transition-transform`}>
+                    {action.icon}
+                  </div>
+                  <h3 className="text-lg font-black text-slate-800 mb-1">{action.label}</h3>
+                  <p className="text-sm text-slate-500">{action.desc}</p>
+                  <div className={`mt-4 inline-flex items-center gap-1 text-xs font-bold ${action.textColor}`}>
+                    Get Started <ChevronRight className="h-3.5 w-3.5" />
+                  </div>
+                </motion.div>
+              );
 
-        {/* 🖼️ Illustration Section */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9 }}
-          className="flex justify-center md:justify-end"
-        >
-          <img
-            src="/hero-illustration.png"
-            alt="Healthcare illustration"
-            className="w-[90%] md:w-[480px] rounded-3xl shadow-lg"
-          />
-        </motion.div>
+              return action.protected ? (
+                <ProtectedLink
+                  key={i}
+                  href={action.href}
+                  requiredRoles={["PATIENT", "DOCTOR", "HOSPITAL_STAFF", "HOSPITAL_ADMIN", "SUPER_ADMIN"]}
+                >
+                  {card}
+                </ProtectedLink>
+              ) : (
+                <Link key={i} href={action.href}>
+                  {card}
+                </Link>
+              );
+            })}
+
+            {/* Stats bar */}
+            <div className="col-span-2 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-5 grid grid-cols-4 gap-4">
+              {TRUST_BADGES.map((b, i) => (
+                <div key={i} className="text-center">
+                  <p className="text-2xl font-black text-white">{b.value}</p>
+                  <p className="text-emerald-200 text-xs font-medium mt-0.5">{b.label}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
