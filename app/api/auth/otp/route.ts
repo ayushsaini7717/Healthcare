@@ -27,29 +27,34 @@ export async function POST(request: Request) {
       update: { code: otp, expiresAt },
       create: { userId: user.id, code: otp, expiresAt },
     });
-    
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    console.log(`OTP for ${email}: ${otp}`);
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Your One-Time Password',
-      html: `
-        <h1>Your One-Time Password</h1>
-        <p>Your OTP is: <strong>${otp}</strong></p>
-        <p>This code is valid for 10 minutes.</p>
-      `,
-    };
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
 
-    await transporter.sendMail(mailOptions);
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Your One-Time Password',
+        html: `
+          <h1>Your One-Time Password</h1>
+          <p>Your OTP is: <strong>${otp}</strong></p>
+          <p>This code is valid for 10 minutes.</p>
+        `,
+      };
 
-    return NextResponse.json({ message: 'OTP sent successfully!' }, { status: 200 });
+      await transporter.sendMail(mailOptions);
+    } else {
+      console.warn("Email credentials missing. Skipping email sending. Use OTP from console.");
+    }
+
+    return NextResponse.json({ message: 'OTP generated (checked console if no email received)!' }, { status: 200 });
 
   } catch (error) {
     console.error('Error sending OTP:', error);

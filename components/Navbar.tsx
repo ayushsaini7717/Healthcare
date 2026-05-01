@@ -49,7 +49,7 @@ export const Navbar = () => {
           </Link>
 
           <ProtectedLink
-            href="/book-appointment"
+            href="/appointments/hospitals"
             requiredRoles={["PATIENT", "DOCTOR", "HOSPITAL_STAFF", "HOSPITAL_ADMIN", "SUPER_ADMIN"]}
             className="text-gray-600 hover:text-emerald-600 font-medium"
           >
